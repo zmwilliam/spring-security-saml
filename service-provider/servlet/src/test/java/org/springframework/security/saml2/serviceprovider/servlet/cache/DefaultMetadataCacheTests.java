@@ -20,6 +20,7 @@ package org.springframework.security.saml2.serviceprovider.servlet.cache;
 import java.time.Clock;
 
 import org.springframework.security.saml2.Saml2ProviderNotFoundException;
+import org.springframework.security.saml2.serviceprovider.servlet.registration.DefaultSaml2MetadataCache;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestOperations;
 
