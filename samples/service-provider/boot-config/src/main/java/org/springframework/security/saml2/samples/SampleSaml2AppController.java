@@ -42,7 +42,8 @@ public class SampleSaml2AppController {
 
 	@RequestMapping(value = {"/local/logout"})
 	public View logout(HttpServletRequest request,
-					   HttpServletResponse response, Authentication authentication) {
+					   HttpServletResponse response,
+					   Authentication authentication) {
 		logger.info("Sample SP Application - Logging out locally!");
 		SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
 		logoutHandler.logout(request, response, authentication);

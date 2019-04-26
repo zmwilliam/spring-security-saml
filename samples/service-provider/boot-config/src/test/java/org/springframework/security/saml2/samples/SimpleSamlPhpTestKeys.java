@@ -17,8 +17,9 @@
 
 package org.springframework.security.saml2.samples;
 
-import org.springframework.security.saml2.model.key.Saml2KeyData;
-import org.springframework.security.saml2.model.key.Saml2KeyType;
+
+import org.springframework.security.saml2.registration.Saml2KeyData;
+import org.springframework.security.saml2.registration.Saml2KeyType;
 
 public class SimpleSamlPhpTestKeys {
 	public static Saml2KeyData getSimpleSamlPhpKeyData() {

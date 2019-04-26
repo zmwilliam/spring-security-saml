@@ -5,13 +5,13 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  */
 
@@ -20,19 +20,13 @@ package org.springframework.security.saml2.registration;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.security.saml2.model.key.Saml2KeyData;
-import org.springframework.security.saml2.model.metadata.Saml2NameId;
-import org.springframework.security.saml2.model.signature.Saml2AlgorithmMethod;
-import org.springframework.security.saml2.model.signature.Saml2DigestMethod;
-
 /**
  * Base class for a SAML2 local provider. A local provider can be paired up with one or more
  * external SAML2 providers
  *
- * @param <ExternalRegistration> either a {@link ExternalSaml2IdentityProviderRegistration} or
- *                               {@link ExternalSaml2ServiceProviderRegistration}
+ * @param <ExternalRegistration> either a {@link ExternalSaml2IdentityProviderRegistration} or ...tbd....
  */
-public abstract class HostedSaml2ProviderRegistration
+abstract class HostedSaml2ProviderRegistration
 	<ExternalRegistration extends ExternalSaml2ProviderRegistration<ExternalRegistration>> {
 
 	private final String pathPrefix;
@@ -42,9 +36,9 @@ public abstract class HostedSaml2ProviderRegistration
 	private final boolean signMetadata;
 	private final String metadata;
 	private final List<Saml2KeyData> keys;
-	private final Saml2AlgorithmMethod defaultSigningAlgorithm;
-	private final Saml2DigestMethod defaultDigest;
-	private final List<Saml2NameId> nameIds;
+	private final String defaultSigningAlgorithm;
+	private final String defaultDigest;
+	private final List<String> nameIds;
 	private final boolean singleLogoutEnabled;
 	private final List<ExternalRegistration> providers;
 
@@ -55,9 +49,9 @@ public abstract class HostedSaml2ProviderRegistration
 									boolean signMetadata,
 									String metadata,
 									List<Saml2KeyData> keys,
-									Saml2AlgorithmMethod defaultSigningAlgorithm,
-									Saml2DigestMethod defaultDigest,
-									List<Saml2NameId> nameIds,
+									String defaultSigningAlgorithm,
+									String defaultDigest,
+									List<String> nameIds,
 									boolean singleLogoutEnabled,
 									List<ExternalRegistration> providers) {
 		this.pathPrefix = pathPrefix;
@@ -102,15 +96,15 @@ public abstract class HostedSaml2ProviderRegistration
 		return singleLogoutEnabled;
 	}
 
-	public List<Saml2NameId> getNameIds() {
+	public List<String> getNameIds() {
 		return nameIds;
 	}
 
-	public Saml2AlgorithmMethod getDefaultSigningAlgorithm() {
+	public String getDefaultSigningAlgorithm() {
 		return defaultSigningAlgorithm;
 	}
 
-	public Saml2DigestMethod getDefaultDigest() {
+	public String getDefaultDigest() {
 		return defaultDigest;
 	}
 

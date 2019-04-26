@@ -15,14 +15,19 @@
  *
  */
 
-include "core"
-include "service-provider/servlet"
-include "autoconfig"
-include "samples/service-provider/boot-config"
+package org.springframework.security.saml2.boot.configuration;
 
-rootProject.name = "spring-security-saml2-minimal"
+import org.springframework.security.saml2.registration.ExternalSaml2IdentityProviderRegistration;
 
-rootProject.children.each { p ->
-	//name the project based on the path
-	p.name = "${rootProject.name}-${p.name.replaceAll("/","-")}"
+public class RemoteSaml2IdentityProviderConfiguration extends RemoteSaml2ProviderConfiguration {
+
+	public ExternalSaml2IdentityProviderRegistration toExternalIdentityProviderRegistration() {
+		return new ExternalSaml2IdentityProviderRegistration(
+			getAlias(),
+			null, //getMetadata(),
+			getLinktext(),
+			getVerificationKeyData()
+		);
+	}
+
 }

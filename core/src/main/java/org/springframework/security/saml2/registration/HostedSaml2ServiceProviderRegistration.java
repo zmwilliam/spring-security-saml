@@ -5,24 +5,19 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  */
 
 package org.springframework.security.saml2.registration;
 
 import java.util.List;
-
-import org.springframework.security.saml2.model.key.Saml2KeyData;
-import org.springframework.security.saml2.model.metadata.Saml2NameId;
-import org.springframework.security.saml2.model.signature.Saml2AlgorithmMethod;
-import org.springframework.security.saml2.model.signature.Saml2DigestMethod;
 
 import static java.util.Arrays.asList;
 
@@ -43,9 +38,9 @@ public class HostedSaml2ServiceProviderRegistration extends
 												  boolean signMetadata,
 												  String metadata,
 												  List<Saml2KeyData> keys,
-												  Saml2AlgorithmMethod defaultSigningAlgorithm,
-												  Saml2DigestMethod defaultDigest,
-												  List<Saml2NameId> nameIds,
+												  String defaultSigningAlgorithm,
+												  String defaultDigest,
+												  List<String> nameIds,
 												  boolean singleLogoutEnabled,
 												  List<ExternalSaml2IdentityProviderRegistration> providers,
 												  boolean signRequests,
@@ -108,9 +103,12 @@ public class HostedSaml2ServiceProviderRegistration extends
 		private boolean signMetadata = true;
 		private String metadata;
 		private List<Saml2KeyData> keys;
-		private Saml2AlgorithmMethod defaultSigningAlgorithm = Saml2AlgorithmMethod.RSA_SHA256;
-		private Saml2DigestMethod defaultDigest = Saml2DigestMethod.SHA256;
-		private List<Saml2NameId> nameIds = asList(Saml2NameId.PERSISTENT, Saml2NameId.EMAIL);
+		private String defaultSigningAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
+		private String defaultDigest = "http://www.w3.org/2001/04/xmlenc#sha256";
+		private List<String> nameIds = asList(
+			"urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+			"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+		);
 		private boolean singleLogoutEnabled = true;
 		private List<ExternalSaml2IdentityProviderRegistration> providers;
 
@@ -167,17 +165,17 @@ public class HostedSaml2ServiceProviderRegistration extends
 			return this;
 		}
 
-		public Builder defaultSigningAlgorithm(Saml2AlgorithmMethod defaultSigningAlgorithm) {
+		public Builder defaultSigningAlgorithm(String defaultSigningAlgorithm) {
 			this.defaultSigningAlgorithm = defaultSigningAlgorithm;
 			return this;
 		}
 
-		public Builder defaultDigest(Saml2DigestMethod defaultDigest) {
+		public Builder defaultDigest(String defaultDigest) {
 			this.defaultDigest = defaultDigest;
 			return this;
 		}
 
-		public Builder nameIds(List<Saml2NameId> nameIds) {
+		public Builder nameIds(List<String> nameIds) {
 			this.nameIds = nameIds;
 			return this;
 		}

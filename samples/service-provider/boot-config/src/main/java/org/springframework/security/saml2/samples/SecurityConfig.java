@@ -21,14 +21,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
 import org.springframework.security.saml2.boot.configuration.Saml2BootConfiguration;
-import org.springframework.security.saml2.serviceprovider.servlet.bean.Saml2ServiceProviderBeans;
 
 @Import
 	({
 		 Saml2BootConfiguration.class,    //properties from application.yml
-		 Saml2ServiceProviderBeans.class  //Service Provider beans used by saml2login()
 	 })
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -42,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.anyRequest().authenticated()
 			.and()
 				.apply(
-					Saml2ServiceProviderConfigurer.saml2Login()
+					null//Saml2ServiceProviderConfigurer.saml2Login()
 				)
 		;
 		// @formatter:on

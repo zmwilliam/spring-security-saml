@@ -20,9 +20,6 @@ package org.springframework.security.saml2.registration;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.springframework.security.saml2.model.key.Saml2KeyData;
-import org.springframework.security.saml2.model.metadata.Saml2Binding;
-import org.springframework.security.saml2.model.metadata.Saml2NameId;
 import org.springframework.util.Assert;
 
 import static org.springframework.util.StringUtils.hasText;
@@ -33,48 +30,12 @@ import static org.springframework.util.StringUtils.hasText;
 public class ExternalSaml2IdentityProviderRegistration extends
 	ExternalSaml2ProviderRegistration<ExternalSaml2IdentityProviderRegistration> {
 
-	private final Saml2NameId nameId;
-	private final int assertionConsumerServiceIndex;
-	private final Saml2Binding authenticationRequestBinding;
 
-	/**
-	 * Creates a configuration representation of an external identity provider
-	 *
-	 * @param alias              - the alias for this provider. should be unique within the local system
-	 * @param metadata           - XML metadata or URL location of XML metadata of this provider
-	 * @param linktext           - Text to be displayed on the
-	 * @param skipSslValidation  - set to true if you wish to disable TLS/SSL certificate validation when fetching
-	 *                           metadata
-	 * @param metadataTrustCheck - set to true if you wish to validate metadata signature against known keys
-	 * @param nameId             - set to a non null value if a specific NameId format is to be used in the
-	 *                           authentication request
-	 * @param verificationKeys   - list of certificates, required if metadataTrustCheck is set to true
-	 */
 	public ExternalSaml2IdentityProviderRegistration(String alias,
-													 String metadata,
 													 String linktext,
-													 boolean skipSslValidation,
-													 boolean metadataTrustCheck,
-													 Saml2NameId nameId,
-													 int assertionConsumerServiceIndex,
-													 List<Saml2KeyData> verificationKeys,
-													 Saml2Binding authenticationRequestBinding) {
-		super(alias, metadata, linktext, skipSslValidation, metadataTrustCheck, verificationKeys);
-		this.nameId = nameId;
-		this.assertionConsumerServiceIndex = assertionConsumerServiceIndex;
-		this.authenticationRequestBinding = authenticationRequestBinding;
-	}
-
-	public Saml2NameId getNameId() {
-		return nameId;
-	}
-
-	public int getAssertionConsumerServiceIndex() {
-		return assertionConsumerServiceIndex;
-	}
-
-	public Saml2Binding getAuthenticationRequestBinding() {
-		return authenticationRequestBinding;
+													 String entityId,
+													 List<Saml2KeyData> verificationKeys) {
+		super(alias, linktext, entityId, verificationKeys);
 	}
 
 	public static Builder builder() {
@@ -84,11 +45,6 @@ public class ExternalSaml2IdentityProviderRegistration extends
 	public static Builder builder(ExternalSaml2IdentityProviderRegistration idp) {
 		return builder()
 			.alias(idp.getAlias())
-			.metadata(idp.getMetadata())
-			.assertionConsumerServiceIndex(idp.getAssertionConsumerServiceIndex())
-			.metadataTrustCheck(idp.isMetadataTrustCheck())
-			.skipSslValidation(idp.isSkipSslValidation())
-			.nameId(idp.getNameId())
 			.linktext(idp.getLinktext())
 			.verificationKeys(idp.getVerificationKeys())
 			;
@@ -97,14 +53,9 @@ public class ExternalSaml2IdentityProviderRegistration extends
 
 	public static final class Builder {
 		private String alias;
-		private String metadata;
+		private String entityId;
 		private String linktext;
-		private boolean skipSslValidation;
-		private Saml2NameId nameId;
-		private int assertionConsumerServiceIndex;
-		private boolean metadataTrustCheck;
 		private List<Saml2KeyData> verificationKeys = new LinkedList<>();
-		private Saml2Binding authenticationRequestBinding = Saml2Binding.REDIRECT;
 
 		private Builder() {
 		}
@@ -114,33 +65,13 @@ public class ExternalSaml2IdentityProviderRegistration extends
 			return this;
 		}
 
-		public Builder metadata(String metadata) {
-			this.metadata = metadata;
+		public Builder entityId(String entityId) {
+			this.entityId = entityId;
 			return this;
 		}
 
 		public Builder linktext(String linktext) {
 			this.linktext = linktext;
-			return this;
-		}
-
-		public Builder skipSslValidation(boolean skipSslValidation) {
-			this.skipSslValidation = skipSslValidation;
-			return this;
-		}
-
-		public Builder nameId(Saml2NameId nameId) {
-			this.nameId = nameId;
-			return this;
-		}
-
-		public Builder assertionConsumerServiceIndex(int assertionConsumerServiceIndex) {
-			this.assertionConsumerServiceIndex = assertionConsumerServiceIndex;
-			return this;
-		}
-
-		public Builder metadataTrustCheck(boolean metadataTrustCheck) {
-			this.metadataTrustCheck = metadataTrustCheck;
 			return this;
 		}
 
@@ -154,24 +85,15 @@ public class ExternalSaml2IdentityProviderRegistration extends
 			return this;
 		}
 
-		public Builder authenticationRequestBinding(Saml2Binding binding) {
-			this.authenticationRequestBinding = binding;
-			return this;
-		}
 
 		public ExternalSaml2IdentityProviderRegistration build() {
 			Assert.notNull(alias, "Alias is required");
-			Assert.notNull(metadata, "Metadata is required");
+			Assert.notNull(entityId, "EntityId is required");
 			return new ExternalSaml2IdentityProviderRegistration(
 				alias,
-				metadata,
 				hasText(linktext) ? linktext : alias,
-				skipSslValidation,
-				metadataTrustCheck,
-				nameId,
-				assertionConsumerServiceIndex,
-				verificationKeys,
-				authenticationRequestBinding
+				entityId,
+				verificationKeys
 			);
 		}
 	}

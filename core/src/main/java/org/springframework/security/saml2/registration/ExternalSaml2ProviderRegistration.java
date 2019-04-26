@@ -19,27 +19,19 @@ package org.springframework.security.saml2.registration;
 
 import java.util.List;
 
-import org.springframework.security.saml2.model.key.Saml2KeyData;
-
-public abstract class ExternalSaml2ProviderRegistration<T extends ExternalSaml2ProviderRegistration> {
+abstract class ExternalSaml2ProviderRegistration<T extends ExternalSaml2ProviderRegistration> {
 	private final String alias;
-	private final String metadata;
 	private final String linktext;
-	private final boolean skipSslValidation;
-	private final boolean metadataTrustCheck;
+	private final String entityId;
 	private final List<Saml2KeyData> verificationKeys;
 
 	ExternalSaml2ProviderRegistration(String alias,
-									  String metadata,
 									  String linktext,
-									  boolean skipSslValidation,
-									  boolean metadataTrustCheck,
+									  String entityId,
 									  List<Saml2KeyData> verificationKeys) {
 		this.alias = alias;
-		this.metadata = metadata;
 		this.linktext = linktext;
-		this.skipSslValidation = skipSslValidation;
-		this.metadataTrustCheck = metadataTrustCheck;
+		this.entityId = entityId;
 		this.verificationKeys = verificationKeys;
 	}
 
@@ -47,23 +39,15 @@ public abstract class ExternalSaml2ProviderRegistration<T extends ExternalSaml2P
 		return alias;
 	}
 
-	public String getMetadata() {
-		return metadata;
-	}
-
 	public String getLinktext() {
 		return linktext;
 	}
 
-	public boolean isSkipSslValidation() {
-		return skipSslValidation;
-	}
-
-	public boolean isMetadataTrustCheck() {
-		return metadataTrustCheck;
-	}
-
 	public List<Saml2KeyData> getVerificationKeys() {
 		return verificationKeys;
+	}
+
+	public String getEntityId() {
+		return entityId;
 	}
 }

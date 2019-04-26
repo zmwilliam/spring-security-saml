@@ -21,25 +21,29 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.saml2.model.authentication.Saml2Assertion;
-import org.springframework.security.saml2.model.authentication.Saml2SubjectPrincipal;
 
 public class DefaultSaml2Authentication implements Saml2Authentication {
 	private boolean authenticated;
-	private Saml2Assertion assertion;
+	private Object assertion;
+	private Object samlResponse;
+	private String username;
 	private String assertingEntityId;
 	private String holdingEntityId;
 	private String relayState;
 	private String responseXml;
 
 	public DefaultSaml2Authentication(boolean authenticated,
-									  Saml2Assertion assertion,
+									  String username,
+									  Object assertion,
+									  Object samlResponse,
 									  String assertingEntityId,
 									  String holdingEntityId,
 									  String relayState,
 									  String responseXml) {
 		this.authenticated = authenticated;
+		this.username = username;
 		this.assertion = assertion;
+		this.samlResponse = samlResponse;
 		this.assertingEntityId = assertingEntityId;
 		this.holdingEntityId = holdingEntityId;
 		this.relayState = relayState;
@@ -57,34 +61,18 @@ public class DefaultSaml2Authentication implements Saml2Authentication {
 	}
 
 	@Override
-	public Saml2SubjectPrincipal<? extends Saml2SubjectPrincipal> getSamlPrincipal() {
-		return assertion.getSubject().getPrincipal();
-	}
-
-	@Override
-	public Saml2Assertion getAssertion() {
+	public Object getAssertion() {
 		return assertion;
 	}
 
-	protected void setAssertion(Saml2Assertion assertion) {
-		this.assertion = assertion;
+	@Override
+	public Object getSamlResponse() {
+		return samlResponse;
 	}
 
 	@Override
 	public String getRelayState() {
 		return relayState;
-	}
-
-	public void setRelayState(String relayState) {
-		this.relayState = relayState;
-	}
-
-	protected void setHoldingEntityId(String holdingEntityId) {
-		this.holdingEntityId = holdingEntityId;
-	}
-
-	protected void setAssertingEntityId(String assertingEntityId) {
-		this.assertingEntityId = assertingEntityId;
 	}
 
 	@Override
@@ -104,7 +92,7 @@ public class DefaultSaml2Authentication implements Saml2Authentication {
 
 	@Override
 	public Object getPrincipal() {
-		return getSamlPrincipal();
+		return getName();
 	}
 
 	@Override
@@ -121,7 +109,7 @@ public class DefaultSaml2Authentication implements Saml2Authentication {
 
 	@Override
 	public String getName() {
-		return getSamlPrincipal().getValue();
+		return username;
 	}
 
 	public String getResponseXml() {
