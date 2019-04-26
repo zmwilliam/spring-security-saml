@@ -23,9 +23,9 @@ include "samples/service-provider/java-config"
 include "samples/service-provider/xml-config"
 include "samples/service-provider/starter"
 
-rootProject.name = "spring-security-saml2"
+rootProject.name = "spring-security-saml2-minimal"
 
 rootProject.children.each { p ->
 	//name the project based on the path
-	p.name = "spring-security-saml2-${p.name.replaceAll("/","-")}"
+	p.name = "${rootProject.name}-${p.name.replaceAll("/","-")}"
 }
