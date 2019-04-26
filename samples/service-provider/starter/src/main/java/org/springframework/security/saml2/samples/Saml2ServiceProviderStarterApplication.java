@@ -14,14 +14,14 @@
  *  limitations under the License.
  *
  */
+package org.springframework.security.saml2.samples;
 
-include "core"
-include "service-provider/servlet"
-include "samples/service-provider/starter"
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-rootProject.name = "spring-security-saml2-mvp"
-
-rootProject.children.each { p ->
-	//name the project based on the path
-	p.name = "${rootProject.name}-${p.name.replaceAll("/","-")}"
+@SpringBootApplication
+public class Saml2ServiceProviderStarterApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(Saml2ServiceProviderStarterApplication.class, args);
+	}
 }

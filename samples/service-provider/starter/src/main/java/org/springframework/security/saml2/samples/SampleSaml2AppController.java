@@ -15,13 +15,21 @@
  *
  */
 
-include "core"
-include "service-provider/servlet"
-include "samples/service-provider/starter"
+package org.springframework.security.saml2.samples;
 
-rootProject.name = "spring-security-saml2-mvp"
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-rootProject.children.each { p ->
-	//name the project based on the path
-	p.name = "${rootProject.name}-${p.name.replaceAll("/","-")}"
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+@Controller
+public class SampleSaml2AppController {
+	private static final Log logger = LogFactory.getLog(Saml2ServiceProviderStarterApplication.class);
+
+	@RequestMapping(value = {"/", "/index", "/logged-in"})
+	public String home() {
+		logger.info("Sample SP Application - You are logged in!");
+		return "logged-in";
+	}
 }
