@@ -15,32 +15,64 @@
  *
  */
 
-package org.springframework.security.saml2.samples;
+package org.springframework.security.saml2.serviceprovider.samples;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
+import org.springframework.security.saml2.util.Saml2KeyData;
+import org.springframework.security.saml2.util.Saml2KeyType;
+
+import static java.util.Collections.singletonList;
+import static org.springframework.security.saml2.util.Saml2KeyData.signatureVerificationKey;
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		// @formatter:off
 		http
 			//application security
 			.authorizeRequests()
+				.mvcMatchers("/saml/sp/**").permitAll()
 				.anyRequest().authenticated()
 				.and()
+			//hack - we don't have dynamic AuthNRequests based on configuration
+			.formLogin()
+				.loginPage(
+					"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?spentityid=http://localhost:8080/sample-sp"
+				)
+			.and()
+			.csrf().ignoringAntMatchers("/saml/sp/**")
+			.and()
 			//saml security
 			.apply(
 				Saml2ServiceProviderConfigurer.saml2Login()
+					.serviceProviderEntityId("http://localhost:8080/sample-sp")
+					.addServiceProviderKey(new Saml2KeyData(
+							"sp-signing-key",
+							privateKey,
+							certificate,
+							privateKeyPassphrase,
+							Saml2KeyType.SIGNING
+						)
+					)
+					.addIdentityProvider(idp -> {
+							idp.setEntityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
+							idp.setVerificationKeys(singletonList(
+								signatureVerificationKey(
+									"simplesamlphp-verification-key",
+									idpCertificate
+								)
+							));
+						}
+					)
 			)
 		;
-		// @formatter:on
 	}
 
-
+	//service provider keys (local keys)
 	private String privateKey = "-----BEGIN RSA PRIVATE KEY-----\n" +
 		"Proc-Type: 4,ENCRYPTED\n" +
 		"DEK-Info: DES-EDE3-CBC,7C8510E4CED17A9F\n" +
@@ -59,6 +91,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		"Afv9BFV943Yp3nHwPC7nYC4FvMxOn4qW4KrHRJl57zcY6VDL4J030CfmvLjqUbuT\n" +
 		"LYiQp/YgFlmoE4bcGuCiaRfUJZCwooPK2dQMoIvMZeVl9ExUGdXVMg==\n" +
 		"-----END RSA PRIVATE KEY-----";
+	private String privateKeyPassphrase = "sppassword";
 	private String certificate = "-----BEGIN CERTIFICATE-----\n" +
 		"MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n" +
 		"VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG\n" +
@@ -75,6 +108,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		"qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD\n" +
 		"RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B\n" +
 		"-----END CERTIFICATE-----";
+
+	private String idpCertificate =
+		"MIIEEzCCAvugAwIBAgIJAIc1qzLrv+5nMA0GCSqGSIb3DQEBCwUAMIGfMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ08xFDASBgNVBAcMC0Nhc3RsZSBSb2NrMRwwGgYDVQQKDBNTYW1sIFRlc3RpbmcgU2VydmVyMQswCQYDVQQLDAJJVDEgMB4GA1UEAwwXc2ltcGxlc2FtbHBocC5jZmFwcHMuaW8xIDAeBgkqhkiG9w0BCQEWEWZoYW5pa0BwaXZvdGFsLmlvMB4XDTE1MDIyMzIyNDUwM1oXDTI1MDIyMjIyNDUwM1owgZ8xCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJDTzEUMBIGA1UEBwwLQ2FzdGxlIFJvY2sxHDAaBgNVBAoME1NhbWwgVGVzdGluZyBTZXJ2ZXIxCzAJBgNVBAsMAklUMSAwHgYDVQQDDBdzaW1wbGVzYW1scGhwLmNmYXBwcy5pbzEgMB4GCSqGSIb3DQEJARYRZmhhbmlrQHBpdm90YWwuaW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC4cn62E1xLqpN34PmbrKBbkOXFjzWgJ9b+pXuaRft6A339uuIQeoeH5qeSKRVTl32L0gdz2ZivLwZXW+cqvftVW1tvEHvzJFyxeTW3fCUeCQsebLnA2qRa07RkxTo6Nf244mWWRDodcoHEfDUSbxfTZ6IExSojSIU2RnD6WllYWFdD1GFpBJOmQB8rAc8wJIBdHFdQnX8Ttl7hZ6rtgqEYMzYVMuJ2F2r1HSU1zSAvwpdYP6rRGFRJEfdA9mm3WKfNLSc5cljz0X/TXy0vVlAV95l9qcfFzPmrkNIst9FZSwpvB49LyAVke04FQPPwLgVH4gphiJH3jvZ7I+J5lS8VAgMBAAGjUDBOMB0GA1UdDgQWBBTTyP6Cc5HlBJ5+ucVCwGc5ogKNGzAfBgNVHSMEGDAWgBTTyP6Cc5HlBJ5+ucVCwGc5ogKNGzAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAvMS4EQeP/ipV4jOG5lO6/tYCb/iJeAduOnRhkJk0DbX329lDLZhTTL/x/w/9muCVcvLrzEp6PN+VWfw5E5FWtZN0yhGtP9R+vZnrV+oc2zGD+no1/ySFOe3EiJCO5dehxKjYEmBRv5sU/LZFKZpozKN/BMEa6CqLuxbzb7ykxVr7EVFXwltPxzE9TmL9OACNNyF5eJHWMRMllarUvkcXlh4pux4ks9e6zV9DQBy2zds9f1I3qxg0eX6JnGrXi/ZiCT+lJgVe3ZFXiejiLAiKB04sXW3ti0LW3lx13Y1YlQ4/tlpgTgfIJxKV6nyPiLoK0nywbMd+vpAirDt2Oc+hk";
 
 }
 

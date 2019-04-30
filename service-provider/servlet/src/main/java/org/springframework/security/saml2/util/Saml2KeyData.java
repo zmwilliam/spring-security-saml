@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.registration;
+package org.springframework.security.saml2.util;
 
 public class Saml2KeyData {
 
@@ -67,56 +67,14 @@ public class Saml2KeyData {
 		return passphrase;
 	}
 
-	public static Builder builder() {
-		return new Builder();
+	public static Saml2KeyData signatureVerificationKey(String keyId, String certificate) {
+		return new Saml2KeyData(
+			keyId,
+			null,
+			certificate,
+			null,
+			Saml2KeyType.SIGNING
+		);
 	}
 
-	public static Builder builder(Saml2KeyData data) {
-		return builder()
-			.certificate(data.getCertificate())
-			.id(data.getId())
-			.passphrase(data.getPassphrase())
-			.privateKey(data.getPrivateKey())
-			.type(data.getType());
-	}
-
-	public static final class Builder {
-		private String id;
-		private String privateKey;
-		private String certificate;
-		private String passphrase;
-		private Saml2KeyType type = Saml2KeyType.SIGNING;
-
-		private Builder() {
-		}
-
-		public Builder id(String name) {
-			this.id = name;
-			return this;
-		}
-
-		public Builder privateKey(String privateKey) {
-			this.privateKey = privateKey;
-			return this;
-		}
-
-		public Builder certificate(String certificate) {
-			this.certificate = certificate;
-			return this;
-		}
-
-		public Builder passphrase(String passphrase) {
-			this.passphrase = passphrase;
-			return this;
-		}
-
-		public Builder type(Saml2KeyType type) {
-			this.type = type;
-			return this;
-		}
-
-		public Saml2KeyData build() {
-			return new Saml2KeyData(id, privateKey, certificate, passphrase, type);
-		}
-	}
 }

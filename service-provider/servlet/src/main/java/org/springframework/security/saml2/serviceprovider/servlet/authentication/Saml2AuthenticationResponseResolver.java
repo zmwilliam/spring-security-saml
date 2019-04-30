@@ -15,29 +15,15 @@
  *
  */
 
-package org.springframework.security.saml2.registration;
+package org.springframework.security.saml2.serviceprovider.servlet.authentication;
 
-public enum Saml2KeyType {
-	SIGNING("signing"),
-	UNSPECIFIED("unspecified"),
-	ENCRYPTION("encryption");
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-	private final String type;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2Authentication;
 
-	Saml2KeyType(String type) {
-		this.type = type;
-	}
-
-	public static Saml2KeyType fromTypeName(String name) {
-		for (Saml2KeyType t : values()) {
-			if (t.getTypeName().equals(name)) {
-				return t;
-			}
-		}
-		return UNSPECIFIED;
-	}
-
-	public String getTypeName() {
-		return type;
-	}
+public interface Saml2AuthenticationResponseResolver {
+	Saml2Authentication resolveSaml2Authentication(HttpServletRequest request,
+												   HttpServletResponse response) throws AuthenticationException;
 }

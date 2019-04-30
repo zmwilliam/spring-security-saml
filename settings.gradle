@@ -15,7 +15,7 @@
  *
  */
 
-include "core"
+include "service-provider/common"
 include "service-provider/servlet"
 include "samples/service-provider/starter"
 

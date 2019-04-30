@@ -15,18 +15,21 @@
  *
  */
 
-package org.springframework.security.saml2;
+package org.springframework.security.saml2.serviceprovider.samples;
 
-public class Saml2KeyException extends Saml2Exception {
-	public Saml2KeyException(String message) {
-		super(message);
-	}
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-	public Saml2KeyException(String message, Throwable cause) {
-		super(message, cause);
-	}
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-	public Saml2KeyException(Throwable cause) {
-		super(cause);
+@Controller
+public class SampleSaml2AppController {
+	private static final Log logger = LogFactory.getLog(Saml2ServiceProviderStarterApplication.class);
+
+	@RequestMapping(value = {"/", "/index", "/logged-in"})
+	public String home() {
+		logger.info("Sample SP Application - You are logged in!");
+		return "logged-in";
 	}
 }

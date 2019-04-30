@@ -15,9 +15,14 @@
  *
  */
 
-/**
- * Classes representing a the configuration for running host, or a tenant.
- * A tenant can have a Service Provider (SP) or an Identity Provider (IDP) or both
- */
+package org.springframework.security.saml2.serviceprovider.samples;
 
-package org.springframework.security.saml2.registration;
+import org.junit.jupiter.api.Test;
+
+class Saml2ServiceProviderConfigurerTests {
+
+	@Test
+	void test() {
+
+	}
+}

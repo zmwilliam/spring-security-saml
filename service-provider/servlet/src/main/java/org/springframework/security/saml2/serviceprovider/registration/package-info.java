@@ -15,13 +15,9 @@
  *
  */
 
-package org.springframework.security.saml2.samples;
+/**
+ * Classes representing a the configuration for running host, or a tenant.
+ * A tenant can have a Service Provider (SP) or an Identity Provider (IDP) or both
+ */
 
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-
-class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
-	static Saml2ServiceProviderConfigurer saml2Login() {
-		return new Saml2ServiceProviderConfigurer();
-	}
-}
+package org.springframework.security.saml2.serviceprovider.registration;

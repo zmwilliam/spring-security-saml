@@ -46,14 +46,6 @@ public interface Saml2Authentication extends Authentication {
 	Object getAssertion();
 
 	/**
-	 * returns the response object that wraps the assertion
-	 *
-	 * @return saml response object containing the assertion
-	 */
-	Object getSamlResponse();
-
-
-	/**
 	 * If the POST or REDIRECT contained a RelayState parameter this will be the value of it
 	 *
 	 * @return the RelayState parameter value, or null

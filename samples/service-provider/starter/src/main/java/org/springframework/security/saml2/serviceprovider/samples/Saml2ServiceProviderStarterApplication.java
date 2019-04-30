@@ -14,19 +14,14 @@
  *  limitations under the License.
  *
  */
+package org.springframework.security.saml2.serviceprovider.samples;
 
-package org.springframework.security.saml2;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class Saml2ProviderNotFoundException extends Saml2Exception {
-	public Saml2ProviderNotFoundException(String message) {
-		super(message);
-	}
-
-	public Saml2ProviderNotFoundException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public Saml2ProviderNotFoundException(Throwable cause) {
-		super(cause);
+@SpringBootApplication
+public class Saml2ServiceProviderStarterApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(Saml2ServiceProviderStarterApplication.class, args);
 	}
 }
