@@ -11,7 +11,7 @@ This project is being rewritten. There is a base implementation in the
 milestone releases in the [milestone](https://repo.spring.io/milestone/org/springframework/security/extensions/spring-security-saml2-core/)
 repository.
 
-In the [develop-3.0](https://github.com/spring-projects/spring-security-saml/tree/develop) branch we are creating a 
+In the [develop-3.0](https://github.com/spring-projects/spring-security-saml/tree/develop-3.0) branch we are creating a 
 solution that builds on top of the milestones and is better aligned with Spring Security.
 The intent with this branch is to merge it with the [Spring Security](https://github.com/spring-projects/spring-security) 
 project and release as part of Spring Security core.
@@ -20,6 +20,14 @@ For that reason, we will not be publishing any official releases of the 2.0.0 mi
 until all feature functionality that exists in the milestones are part of Spring Security.
 
 We continue to accept pull request for the 1.0.x branch, but are not actively developing it.
+
+## One More Upgrade
+
+It was deemed that the [develop-3.0](https://github.com/spring-projects/spring-security-saml/tree/develop-3.0) branch
+contained a too complex Java POJO abstraction layer. Perhaps even redundant.
+
+So we are initiating a third rewrite in the 
+[mvp/minimal](https://github.com/spring-projects/spring-security-saml/tree/mvp/minimal) branch
 
 ## Code of Conduct
 This project adheres to the Contributor Covenant [code of conduct](CODE_OF_CONDUCT.adoc).

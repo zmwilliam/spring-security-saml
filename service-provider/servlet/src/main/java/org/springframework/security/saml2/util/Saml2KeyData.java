@@ -37,16 +37,6 @@ public class Saml2KeyData {
 		this.type = type;
 	}
 
-	public Saml2KeyData(Saml2KeyData other) {
-		this(
-			other.getId(),
-			other.getPrivateKey(),
-			other.getCertificate(),
-			other.getPassphrase(),
-			other.getType()
-		);
-	}
-
 	public String getId() {
 		return id;
 	}

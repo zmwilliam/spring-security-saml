@@ -18,18 +18,16 @@
 package org.springframework.security.saml2.spi;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import javax.xml.datatype.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.security.saml2.Saml2Exception;
-import org.springframework.security.saml2.util.Saml2KeyData;
 
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
-import net.shibboleth.utilities.java.support.xml.DOMTypeSupport;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.config.InitializationException;
@@ -45,9 +43,11 @@ import org.w3c.dom.Element;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
-public final class OpenSaml2Implementation extends Saml2JavaAbstraction<OpenSaml2Implementation> {
+public final class OpenSaml2Implementation {
 
 	private BasicParserPool parserPool;
+	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);
+	private Clock time;
 
 	public OpenSaml2Implementation() {
 		this(Clock.systemUTC());
@@ -58,7 +58,7 @@ public final class OpenSaml2Implementation extends Saml2JavaAbstraction<OpenSaml
 	}
 
 	public OpenSaml2Implementation(Clock time, BasicParserPool parserPool) {
-		super(time);
+		this.time = time;
 		this.parserPool = parserPool;
 	}
 
@@ -70,8 +70,54 @@ public final class OpenSaml2Implementation extends Saml2JavaAbstraction<OpenSaml
 		return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 	}
 
-	@Override
-	protected void bootstrap() {
+	public synchronized OpenSaml2Implementation init() {
+		if (!hasInitCompleted.get()) {
+			performInit();
+		}
+		return this;
+	}
+
+	public XMLObject resolve(String xml) {
+		return resolve(xml.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public XMLObject resolve(byte[] xml) {
+		XMLObject parsed = parse(xml);
+		if (parsed != null) {
+			return parsed;
+		}
+		throw new Saml2Exception("Deserialization not supported for given data set");
+	}
+
+	public String encode(byte[] b) {
+		return Saml2EncodingUtils.encode(b);
+	}
+
+	public byte[] decode(String s) {
+		return Saml2EncodingUtils.decode(s);
+	}
+
+	public byte[] deflate(String s) {
+		return Saml2EncodingUtils.deflate(s);
+	}
+
+	public String inflate(byte[] b) {
+		return Saml2EncodingUtils.inflate(b);
+	}
+
+	/*
+	==============================================================
+	                     PRIVATE METHODS
+	==============================================================
+	 */
+	private synchronized void performInit() {
+		if (hasInitCompleted.compareAndSet(false, true)) {
+			java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			bootstrap();
+		}
+	}
+
+	private void bootstrap() {
 		//configure default values
 		//maxPoolSize = 5;
 		getParserPool().setMaxPoolSize(50);
@@ -130,25 +176,6 @@ public final class OpenSaml2Implementation extends Saml2JavaAbstraction<OpenSaml
 		}
 
 		registry.setParserPool(getParserPool());
-	}
-
-	@Override
-	protected Duration toDuration(long millis) {
-		if (millis < 0) {
-			return null;
-		}
-		else {
-			return DOMTypeSupport.getDataTypeFactory().newDuration(millis);
-		}
-	}
-
-	@Override
-	public Object resolve(byte[] xml, List<Saml2KeyData> localKeys) {
-		XMLObject parsed = parse(xml);
-		if (parsed != null) {
-			return parsed;
-		}
-		throw new Saml2Exception("Deserialization not yet supported.");
 	}
 
 	private XMLObject parse(byte[] xml) {

@@ -100,10 +100,13 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 		Response samlResponse = getSaml2Response(xml);
 		Assertion assertion = validateSaml2Response(request, samlResponse);
 
-		return extractSaml2Authentication(xml, samlResponse, assertion);
+		return extractSaml2Authentication(request, xml, samlResponse, assertion);
 	}
 
-	private Saml2Authentication extractSaml2Authentication(String xml, Response samlResponse, Assertion assertion) {
+	private Saml2Authentication extractSaml2Authentication(HttpServletRequest request,
+														   String xml,
+														   Response samlResponse,
+														   Assertion assertion) {
 		String username = assertion.getSubject().getNameID().getValue();
 		return new DefaultSaml2Authentication(
 			true,
@@ -111,7 +114,7 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 			assertion,
 			samlResponse.getIssuer().getValue(),
 			null,
-			null,
+			request.getParameter("RelayState"),
 			xml
 		);
 	}
@@ -181,7 +184,7 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 	}
 
 	private Response getSaml2Response(String xml) throws Saml2Exception, AuthenticationException {
-		final Object result = saml.resolve(xml, localKeys);
+		final Object result = saml.resolve(xml);
 		if (result == null) {
 			throw new AuthenticationCredentialsNotFoundException("SAMLResponse returned null object");
 		}
