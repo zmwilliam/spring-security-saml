@@ -76,7 +76,7 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
 	private String localSpEntityId;
-	private final List<Saml2KeyData> localKeys;
+	private final List<Saml2KeyData> localKeys;//used for decryption
 	private Saml2IdentityProviderRepository idps;
 
 	public OpenSamlAuthenticationResponseResolver(String localSpEntityId,
