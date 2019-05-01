@@ -30,22 +30,19 @@ import static org.springframework.security.saml2.util.Saml2KeyData.signatureVeri
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+	public static final String SIMPLESAMLPHP_IDP_INITIATE_URL =
+		"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?spentityid=http://localhost:8080/sample-sp";
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		//@formatter:off
 		http
-			//application security
-			.authorizeRequests()
-			.mvcMatchers("/saml/sp/**").permitAll()
-			.anyRequest().authenticated()
-			.and()
 			//hack - we don't have dynamic AuthNRequests based on configuration
+			//right now we configure the form login to redirect to the IDP
+			//hard coded.
 			.formLogin()
-			.loginPage(
-				"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?spentityid=http://localhost:8080/sample-sp"
-			)
-			.and()
-			.csrf().ignoringAntMatchers("/saml/sp/**")
-			.and()
+				.loginPage(SIMPLESAMLPHP_IDP_INITIATE_URL)
+				.and()
 			//saml security
 			.apply(
 				Saml2ServiceProviderConfigurer.saml2Login()
@@ -70,6 +67,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					)
 			)
 		;
+		//@formatter:on
 	}
 
 	//service provider keys (local keys)

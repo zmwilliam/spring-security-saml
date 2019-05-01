@@ -60,24 +60,30 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	@Override
 	public void init(HttpSecurity builder) throws Exception {
 		super.init(builder);
+		builder.authorizeRequests()
+			.mvcMatchers("/saml/sp/**").permitAll()
+			.anyRequest().authenticated();
+		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 	}
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
 		Saml2IdentityProviderRepository identityProviderRepository = new Saml2IdentityProviderRepository(providers);
+
 		OpenSamlAuthenticationResponseResolver responseResolver =
 			new OpenSamlAuthenticationResponseResolver(
 				serviceProviderEntityId,
 				serviceProviderKeys,
 				identityProviderRepository
 			);
+
 		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
+
 		Saml2WebSsoAuthenticationFilter filter = new Saml2WebSsoAuthenticationFilter(
 			responseResolver,
 			new AntPathRequestMatcher("/saml/sp/SSO/**")
 		);
 		filter.setAuthenticationFailureHandler(failureHandler);
-
 		builder.addFilterAfter(filter, HeaderWriterFilter.class);
 	}
 }
