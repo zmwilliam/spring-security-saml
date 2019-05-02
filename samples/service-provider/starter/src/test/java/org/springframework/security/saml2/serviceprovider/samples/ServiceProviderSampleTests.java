@@ -62,7 +62,6 @@ import org.w3c.dom.Element;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildConditions;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildIssuer;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildResponse;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubject;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmation;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmationData;
@@ -88,15 +87,11 @@ public class ServiceProviderSampleTests {
 	}
 
 	@Test
-	@DisplayName("test")
-	void test() throws Exception {
+	@DisplayName("test signed response")
+	void signedResponse() throws Exception {
 		Assertion assertion = buildAssertion();
-		Response response = buildResponse();
-		response.setID("_" + UUID.randomUUID().toString());
-		response.setDestination("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
-		response.setIssuer(buildIssuer("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php"));
-		response.getAssertions().add(assertion);
-		signXmlObject(response, getSigningCredential(idpCertificate, idpPrivateKey));
+		Response response = buildResponse(assertion);
+		signXmlObject(response, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
 		mockMvc.perform(
 			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
@@ -109,6 +104,32 @@ public class ServiceProviderSampleTests {
 			.andExpect(authenticated());
 	}
 
+	@Test
+	@DisplayName("test signed assertion")
+	void signedAssertion() throws Exception {
+		Assertion assertion = buildAssertion();
+		Response response = buildResponse(assertion);
+		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
+		String xml = toXml(response);
+		mockMvc.perform(
+			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
+				.contextPath("/sample-sp")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
+		)
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sample-sp/"))
+			.andExpect(authenticated());
+	}
+
+	private Response buildResponse(Assertion assertion) {
+		Response response = SAML2ActionTestingSupport.buildResponse();
+		response.setID("_" + UUID.randomUUID().toString());
+		response.setDestination("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
+		response.setIssuer(buildIssuer("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php"));
+		response.getAssertions().add(assertion);
+		return response;
+	}
 
 	private Assertion buildAssertion() {
 		Assertion assertion = SAML2ActionTestingSupport.buildAssertion();
@@ -128,12 +149,12 @@ public class ServiceProviderSampleTests {
 		return assertion;
 	}
 
-	protected Credential getSigningCredential(String certificate, String key) throws CertificateException,
-																					 KeyException {
+	protected Credential getSigningCredential(String certificate, String key, UsageType usageType) throws CertificateException,
+																										  KeyException {
 		PublicKey publicKey = X509Support.decodeCertificate(certificate.getBytes(UTF_8)).getPublicKey();
 		final PrivateKey privateKey = KeySupport.decodePrivateKey(key.getBytes(UTF_8), new char[0]);
 		BasicCredential cred = CredentialSupport.getSimpleCredential(publicKey, privateKey);
-		cred.setUsageType(UsageType.SIGNING);
+		cred.setUsageType(usageType);
 		cred.setEntityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
 		return cred;
 	}
