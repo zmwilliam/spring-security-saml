@@ -13,16 +13,14 @@ the user in the local application based on mutual trust with the identity provid
 
 1. Start up Spring Security Boot Sample
 ```
-    ./gradlew :spring-security-saml2-samples-service-provider-starter:bootRun
+    ./gradlew clean :spring-security-saml2-mvp-samples-service-provider-starter:bootRun
 ```
 
-1. IDP Initiated Login
+1. Access the application
 ```
-    URL : http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?spentityid=http://localhost:8080/sample-sp
+    URL : http://localhost:8080/sample-sp
     User: user
     Password: password
 ```
 
- 
-### Test Support
 

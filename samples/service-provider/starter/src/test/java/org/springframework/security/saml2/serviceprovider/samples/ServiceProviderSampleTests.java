@@ -29,7 +29,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
-import org.springframework.security.saml2.spi.OpenSaml2Implementation;
+import org.springframework.security.saml2.serviceprovider.servlet.authentication.OpenSaml2Implementation;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -105,7 +105,7 @@ public class ServiceProviderSampleTests {
 			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
 				.contextPath("/sample-sp")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", saml.encode(xml.getBytes(UTF_8)))
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
 		)
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/sample-sp/"))

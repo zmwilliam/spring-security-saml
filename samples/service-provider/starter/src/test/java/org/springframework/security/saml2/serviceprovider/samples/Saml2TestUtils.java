@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.spi;
+package org.springframework.security.saml2.serviceprovider.samples;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,18 +31,18 @@ import org.apache.commons.codec.binary.Base64;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.zip.Deflater.DEFLATED;
 
-final class Saml2EncodingUtils {
+final class Saml2TestUtils {
 	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[]{'\n'});
 
 	public static String encode(byte[] b) {
 		return UNCHUNKED_ENCODER.encodeToString(b);
 	}
 
-	static byte[] decode(String s) {
+	public static byte[] decode(String s) {
 		return UNCHUNKED_ENCODER.decode(s);
 	}
 
-	static byte[] deflate(String s) {
+	public static byte[] deflate(String s) {
 		try {
 			ByteArrayOutputStream b = new ByteArrayOutputStream();
 			DeflaterOutputStream deflater = new DeflaterOutputStream(b, new Deflater(DEFLATED, true));
@@ -54,7 +54,7 @@ final class Saml2EncodingUtils {
 		}
 	}
 
-	static String inflate(byte[] b) {
+	public static String inflate(byte[] b) {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			InflaterOutputStream iout = new InflaterOutputStream(out, new Inflater(true));
@@ -65,4 +65,5 @@ final class Saml2EncodingUtils {
 			throw new Saml2Exception("Unable to inflate string", e);
 		}
 	}
+
 }

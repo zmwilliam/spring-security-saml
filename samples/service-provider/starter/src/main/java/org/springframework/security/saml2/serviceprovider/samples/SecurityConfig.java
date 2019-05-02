@@ -21,11 +21,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
-import org.springframework.security.saml2.util.Saml2KeyData;
-import org.springframework.security.saml2.util.Saml2KeyType;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyType;
 
 import static java.util.Collections.singletonList;
-import static org.springframework.security.saml2.util.Saml2KeyData.signatureVerificationKey;
+import static org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData.signatureVerificationKey;
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -37,11 +37,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		//@formatter:off
 		http
+			.authorizeRequests()
+				.mvcMatchers("/", "/index").permitAll()
+				.and()
 			//hack - we don't have dynamic AuthNRequests based on configuration
 			//right now we configure the form login to redirect to the IDP
 			//hard coded.
 			.formLogin()
 				.loginPage(SIMPLESAMLPHP_IDP_INITIATE_URL)
+				.and()
+			.logout()
+				.logoutSuccessUrl("/")
 				.and()
 			//saml security
 			.apply(

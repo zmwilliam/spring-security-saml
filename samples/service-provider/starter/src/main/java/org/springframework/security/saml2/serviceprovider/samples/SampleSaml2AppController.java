@@ -17,6 +17,9 @@
 
 package org.springframework.security.saml2.serviceprovider.samples;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -27,9 +30,27 @@ import org.apache.commons.logging.LogFactory;
 public class SampleSaml2AppController {
 	private static final Log logger = LogFactory.getLog(Saml2ServiceProviderStarterApplication.class);
 
-	@RequestMapping(value = {"/", "/index", "/logged-in"})
-	public String home() {
+	@RequestMapping(value = {"/logged-in"})
+	public String loggedIn() {
 		logger.info("Sample SP Application - You are logged in!");
 		return "logged-in";
+	}
+
+	@RequestMapping(value = {"/", "/index"})
+	public String landingPage() {
+		logger.info("Sample SP Application - Landing Page");
+		if (isLoggedIn()) {
+			return loggedIn();
+		}
+		else {
+			return "index";
+		}
+	}
+
+	private boolean isLoggedIn() {
+		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		return authentication != null &&
+			!(authentication instanceof AnonymousAuthenticationToken) &&
+			authentication.isAuthenticated();
 	}
 }

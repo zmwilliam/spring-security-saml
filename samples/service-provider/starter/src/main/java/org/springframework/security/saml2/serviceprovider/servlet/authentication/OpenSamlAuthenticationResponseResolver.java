@@ -39,8 +39,7 @@ import org.springframework.security.saml2.serviceprovider.authentication.Default
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2Authentication;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2IdentityProviderRepository;
-import org.springframework.security.saml2.spi.OpenSaml2Implementation;
-import org.springframework.security.saml2.util.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
 
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
@@ -195,9 +194,9 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 	}
 
 	private String decodeAndInflate(HttpServletRequest request, String encodedXml) {
-		byte[] b = saml.decode(encodedXml);
+		byte[] b = Saml2EncodingUtils.decode(encodedXml);
 		if (HttpMethod.GET.matches(request.getMethod())) {
-			return saml.inflate(b);
+			return Saml2EncodingUtils.inflate(b);
 		}
 		else {
 			return new String(b, UTF_8);

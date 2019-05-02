@@ -15,11 +15,10 @@
  *
  */
 
-package org.springframework.security.saml2.spi;
+package org.springframework.security.saml2.serviceprovider.servlet.authentication;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,27 +46,17 @@ public final class OpenSaml2Implementation {
 
 	private BasicParserPool parserPool;
 	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);
-	private Clock time;
 
 	public OpenSaml2Implementation() {
-		this(Clock.systemUTC());
+		this(new BasicParserPool());
 	}
 
-	public OpenSaml2Implementation(Clock time) {
-		this(time, new BasicParserPool());
-	}
-
-	public OpenSaml2Implementation(Clock time, BasicParserPool parserPool) {
-		this.time = time;
+	public OpenSaml2Implementation(BasicParserPool parserPool) {
 		this.parserPool = parserPool;
 	}
 
 	protected BasicParserPool getParserPool() {
 		return parserPool;
-	}
-
-	private UnmarshallerFactory getUnmarshallerFactory() {
-		return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 	}
 
 	public synchronized OpenSaml2Implementation init() {
@@ -87,22 +76,6 @@ public final class OpenSaml2Implementation {
 			return parsed;
 		}
 		throw new Saml2Exception("Deserialization not supported for given data set");
-	}
-
-	public String encode(byte[] b) {
-		return Saml2EncodingUtils.encode(b);
-	}
-
-	public byte[] decode(String s) {
-		return Saml2EncodingUtils.decode(s);
-	}
-
-	public byte[] deflate(String s) {
-		return Saml2EncodingUtils.deflate(s);
-	}
-
-	public String inflate(byte[] b) {
-		return Saml2EncodingUtils.inflate(b);
 	}
 
 	/*
@@ -178,6 +151,10 @@ public final class OpenSaml2Implementation {
 		registry.setParserPool(getParserPool());
 	}
 
+	private UnmarshallerFactory getUnmarshallerFactory() {
+		return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
+	}
+
 	private XMLObject parse(byte[] xml) {
 		try {
 			Document document = getParserPool().parse(new ByteArrayInputStream(xml));
@@ -187,6 +164,4 @@ public final class OpenSaml2Implementation {
 			throw new Saml2Exception(e);
 		}
 	}
-
-
 }

@@ -27,7 +27,7 @@ import org.springframework.security.saml2.serviceprovider.servlet.authentication
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
-import org.springframework.security.saml2.util.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
 import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 

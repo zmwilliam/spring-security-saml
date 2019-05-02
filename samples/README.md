@@ -41,7 +41,7 @@ to configure the SAML Service Provider.
 
 Service Provider runs on `http://localhost:8080/sample-sp`
 
-    ./gradlew :spring-security-saml2-samples-service-provider-starter:bootRun
+    ./gradlew :spring-security-saml2-mvp-samples-service-provider-starter:bootRun
 
 In order to have the sample run, we need to configure at least a private key/certificate
 along with one remote Identity Provider (IDP). 

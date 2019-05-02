@@ -15,8 +15,6 @@
  *
  */
 
-include "service-provider/common"
-include "service-provider/servlet"
 include "samples/service-provider/starter"
 
 rootProject.name = "spring-security-saml2-mvp"

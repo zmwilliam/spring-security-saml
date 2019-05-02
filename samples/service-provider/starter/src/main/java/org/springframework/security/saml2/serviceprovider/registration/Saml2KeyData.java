@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.util;
+package org.springframework.security.saml2.serviceprovider.registration;
 
 public class Saml2KeyData {
 

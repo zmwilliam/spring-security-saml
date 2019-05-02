@@ -27,16 +27,59 @@ buildscript {
 apply plugin: "org.springframework.boot"
 
 dependencies {
-	compile project(":spring-security-saml2-mvp-service-provider-servlet")
 
-	compile group: "org.springframework", name: "spring-webflux", version: "$springVersion"
+	//---Workaround For Incorrectly Included servlet-api.jar --
+	//---https://stackoverflow.com/questions/54685733/spring-sleuth-getting-exception-for-post-requests/55927112#55927112
+	provided "org.apache.tomcat:tomcat-servlet-api:9.0.19"
 
-	compile group: "org.springframework.boot", name: "spring-boot-starter-thymeleaf", version: "$springBootVersion"
-	compile group: "org.springframework.boot", name: "spring-boot-starter-web", version: "$springBootVersion"
+	//---Spring Security Core--
+	compile group: "org.springframework.security", name: "spring-security-core", version: "$springSecurityVersion"
+	compile group: "org.springframework.security", name: "spring-security-config", version: "$springSecurityVersion"
 
+	compile(group: "org.opensaml", name: "opensaml-core", version: "$openSamlVersion")
+	compile(group: "org.opensaml", name: "opensaml-saml-api", version: "$openSamlVersion")
+	compile(group: "org.opensaml", name: "opensaml-saml-impl", version: "$openSamlVersion")
+
+	//---Override Dependencies
+	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: "$bcprovVersion"
+	compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: "$bcprovVersion"
+	compile group: 'joda-time', name: 'joda-time', version: "$jodaTimeVersion"
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "$httpClientVersion"
+	compile group: "org.slf4j", name: "slf4j-api", version: "$slf4jVersion"
+	compile group: 'commons-logging', name: 'commons-logging', version: "$commonsLoggingVersion"
+
+	//---Spring Security Servlet --
+	compile group: "org.springframework", name: "spring-web", version: "$springVersion"
+	compile group: "org.springframework.security", name: "spring-security-web", version: "$springSecurityVersion"
+
+	//---Boot --
+	compile (group: "org.springframework.boot", name: "spring-boot-starter-thymeleaf", version: "$springBootVersion") {
+		exclude group: "ch.qos.logback", module: "logback-classic"
+	}
+	compile (group: "org.springframework.boot", name: "spring-boot-starter-web", version: "$springBootVersion") {
+		exclude group: "ch.qos.logback", module: "logback-classic"
+	}
 	compile group: "org.thymeleaf.extras", name: "thymeleaf-extras-springsecurity5", version: "$thymeleafExtrasSpringSecurityVersion"
 
-	testCompile group: "org.springframework.boot", name: "spring-boot-starter-test", version: "$springBootVersion"
+
+
+	testCompile (group: "org.springframework", name: "spring-test", version: "$springVersion") {
+		exclude group: "commons-logging", module: "commons-logging"
+	}
+	testCompile group: "org.slf4j", name: "slf4j-log4j12", version: "$slf4jVersion"
+	testCompile group: "commons-logging", name: "commons-logging", version: "$commonsLoggingVersion"
+	testCompile (group: "org.springframework", name: "spring-test", version: "$springVersion") {
+		exclude group: "commons-logging", module: "commons-logging"
+	}
+	testCompile group: 'org.xmlunit', name: 'xmlunit-core', version: '2.5.1'
+	testCompile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+	testCompile group: 'org.mockito', name: 'mockito-core', version: "${mockitoVersion}"
+	testCompile (group: "org.springframework.boot", name: "spring-boot-starter-test", version: "$springBootVersion") {
+		exclude group: "ch.qos.logback", module: "logback-classic"
+	}
 	testCompile group: "org.springframework.security", name: "spring-security-test", version: "$springSecurityVersion"
+
+
+
 
 }
