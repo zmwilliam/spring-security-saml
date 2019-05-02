@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.samples;
+package sample.samples;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

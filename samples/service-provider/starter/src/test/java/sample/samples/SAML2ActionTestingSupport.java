@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.springframework.security.saml2.serviceprovider.samples;
+package sample.samples;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

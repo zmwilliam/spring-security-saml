@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.samples;
+package sample;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.springframework.security.saml2.serviceprovider.samples;
+package sample.samples;
 
 import java.security.KeyException;
 import java.security.PrivateKey;
@@ -61,17 +61,17 @@ import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildConditions;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildIssuer;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubject;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmation;
-import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmationData;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static sample.samples.SAML2ActionTestingSupport.buildConditions;
+import static sample.samples.SAML2ActionTestingSupport.buildIssuer;
+import static sample.samples.SAML2ActionTestingSupport.buildSubject;
+import static sample.samples.SAML2ActionTestingSupport.buildSubjectConfirmation;
+import static sample.samples.SAML2ActionTestingSupport.buildSubjectConfirmationData;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -85,7 +85,7 @@ public class ServiceProviderSampleTests {
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
-	@ComponentScan(basePackages = "org/springframework/security/saml2/serviceprovider/samples")
+	@ComponentScan(basePackages = "sample")
 	public static class SpringBootApplicationTestConfig {
 	}
 
