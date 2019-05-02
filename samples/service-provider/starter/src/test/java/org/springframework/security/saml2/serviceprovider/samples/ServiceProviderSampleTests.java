@@ -60,13 +60,16 @@ import org.opensaml.xmlsec.signature.support.SignatureSupport;
 import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildConditions;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildIssuer;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubject;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmation;
 import static org.springframework.security.saml2.serviceprovider.samples.SAML2ActionTestingSupport.buildSubjectConfirmationData;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,6 +123,23 @@ public class ServiceProviderSampleTests {
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/sample-sp/"))
 			.andExpect(authenticated());
+	}
+
+	@Test
+	@DisplayName("unsigned response")
+	void unsigned() throws Exception {
+		Assertion assertion = buildAssertion();
+		Response response = buildResponse(assertion);
+		String xml = toXml(response);
+		mockMvc.perform(
+			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
+				.contextPath("/sample-sp")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
+		)
+			.andExpect(status().is4xxClientError())
+			.andExpect(unauthenticated())
+			.andExpect(content().string(containsString("Unable to find a valid assertion")));
 	}
 
 	private Response buildResponse(Assertion assertion) {
