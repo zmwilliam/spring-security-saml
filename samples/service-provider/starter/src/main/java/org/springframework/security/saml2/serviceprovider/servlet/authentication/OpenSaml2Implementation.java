@@ -47,30 +47,30 @@ final class OpenSaml2Implementation {
 	private BasicParserPool parserPool;
 	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);
 
-	public OpenSaml2Implementation() {
+	OpenSaml2Implementation() {
 		this(new BasicParserPool());
 	}
 
-	public OpenSaml2Implementation(BasicParserPool parserPool) {
+	OpenSaml2Implementation(BasicParserPool parserPool) {
 		this.parserPool = parserPool;
 	}
 
-	protected BasicParserPool getParserPool() {
+	BasicParserPool getParserPool() {
 		return parserPool;
 	}
 
-	public synchronized OpenSaml2Implementation init() {
+	synchronized OpenSaml2Implementation init() {
 		if (!hasInitCompleted.get()) {
 			performInit();
 		}
 		return this;
 	}
 
-	public XMLObject resolve(String xml) {
+	XMLObject resolve(String xml) {
 		return resolve(xml.getBytes(StandardCharsets.UTF_8));
 	}
 
-	public XMLObject resolve(byte[] xml) {
+	XMLObject resolve(byte[] xml) {
 		XMLObject parsed = parse(xml);
 		if (parsed != null) {
 			return parsed;

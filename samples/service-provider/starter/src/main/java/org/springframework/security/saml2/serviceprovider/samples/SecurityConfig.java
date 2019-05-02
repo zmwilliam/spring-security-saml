@@ -40,12 +40,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.authorizeRequests()
 				.mvcMatchers("/", "/index").permitAll()
 				.and()
-			//hack - we don't have dynamic AuthNRequests based on configuration
-			//right now we configure the form login to redirect to the IDP
-			//hard coded.
-			.formLogin()
-				.loginPage(SIMPLESAMLPHP_IDP_INITIATE_URL)
-				.and()
 			.logout()
 				.logoutSuccessUrl("/")
 				.and()
