@@ -15,13 +15,11 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.servlet.filter;
+package org.springframework.security.saml2.serviceprovider.registration;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 
 public class Saml2IdentityProviderRepository {
 

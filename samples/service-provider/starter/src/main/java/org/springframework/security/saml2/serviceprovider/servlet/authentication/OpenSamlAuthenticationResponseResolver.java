@@ -38,7 +38,7 @@ import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2Authentication;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2Authentication;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2IdentityProviderRepository;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
 
 import org.opensaml.saml.common.SignableSAMLObject;
