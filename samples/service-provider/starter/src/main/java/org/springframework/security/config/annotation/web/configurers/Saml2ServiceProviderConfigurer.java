@@ -21,15 +21,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.servlet.authentication.OpenSamlAuthenticationResponseResolver;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.servlet.authentication.Saml2AuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
 	public static Saml2ServiceProviderConfigurer saml2Login() {
@@ -64,26 +64,26 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 			.mvcMatchers("/saml/sp/**").permitAll()
 			.anyRequest().authenticated();
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
-	}
 
-	@Override
-	public void configure(HttpSecurity builder) throws Exception {
 		Saml2IdentityProviderRepository identityProviderRepository = new Saml2IdentityProviderRepository(providers);
-
-		OpenSamlAuthenticationResponseResolver responseResolver =
-			new OpenSamlAuthenticationResponseResolver(
+		Saml2AuthenticationProvider authenticationProvider =
+			new Saml2AuthenticationProvider(
 				serviceProviderEntityId,
 				serviceProviderKeys,
 				identityProviderRepository
 			);
 
-		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
+		builder.authenticationProvider(postProcess(authenticationProvider));
+	}
 
-		Saml2WebSsoAuthenticationFilter filter = new Saml2WebSsoAuthenticationFilter(
-			responseResolver,
-			new AntPathRequestMatcher("/saml/sp/SSO/**")
-		);
+	@Override
+	public void configure(HttpSecurity builder) throws Exception {
+		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
+		Saml2WebSsoAuthenticationFilter filter = new Saml2WebSsoAuthenticationFilter("/saml/sp/SSO/**");
 		filter.setAuthenticationFailureHandler(failureHandler);
+
+		filter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
+
 		builder.addFilterAfter(filter, HeaderWriterFilter.class);
 	}
 }

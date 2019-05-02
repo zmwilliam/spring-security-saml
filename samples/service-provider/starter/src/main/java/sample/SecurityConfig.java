@@ -30,19 +30,10 @@ import static org.springframework.security.saml2.serviceprovider.registration.Sa
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-	public static final String SIMPLESAMLPHP_IDP_INITIATE_URL =
-		"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?spentityid=http://localhost:8080/sample-sp";
-
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		//@formatter:off
 		http
-			.authorizeRequests()
-				.mvcMatchers("/", "/index").permitAll()
-				.and()
-			.logout()
-				.logoutSuccessUrl("/")
-				.and()
 			//saml security
 			.apply(
 				Saml2ServiceProviderConfigurer.saml2Login()
@@ -66,6 +57,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						}
 					)
 			)
+				.and()
+			.authorizeRequests()
+				.mvcMatchers("/", "/index").permitAll()
+				.and()
+			.logout()
+				.logoutSuccessUrl("/")
+				.and()
 		;
 		//@formatter:on
 	}

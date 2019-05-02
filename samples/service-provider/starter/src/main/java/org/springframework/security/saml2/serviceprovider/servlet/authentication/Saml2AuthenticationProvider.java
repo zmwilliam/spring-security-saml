@@ -27,19 +27,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.ProviderNotFoundException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.saml2.Saml2Exception;
-import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2Authentication;
-import org.springframework.security.saml2.serviceprovider.authentication.Saml2Authentication;
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.util.Saml2EncodingUtils;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
@@ -69,59 +73,54 @@ import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngin
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
-import static org.springframework.util.StringUtils.hasText;
+import static java.util.Collections.singletonList;
 
-public class OpenSamlAuthenticationResponseResolver implements Saml2AuthenticationResponseResolver {
+public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
-	private String localSpEntityId;
+	private final String localSpEntityId;
 	private final List<Saml2KeyData> localKeys;//used for decryption
-	private Saml2IdentityProviderRepository idps;
+	private final Saml2IdentityProviderRepository idps;
+	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 
-	public OpenSamlAuthenticationResponseResolver(String localSpEntityId,
-												  List<Saml2KeyData> localKeys,
-												  Saml2IdentityProviderRepository idpRepository) {
+	public Saml2AuthenticationProvider(String localSpEntityId,
+									   List<Saml2KeyData> localKeys,
+									   Saml2IdentityProviderRepository idpRepository) {
 		this.localSpEntityId = localSpEntityId;
 		this.localKeys = localKeys;
 		idps = idpRepository;
 	}
 
 	@Override
-	public Saml2Authentication resolveSaml2Authentication(HttpServletRequest request, HttpServletResponse response)
-		throws AuthenticationException {
-		final String responseParamName = "SAMLResponse";
-		String encodedXml = request.getParameter(responseParamName);
-		if (!hasText(encodedXml)) {
-			throw new AuthenticationCredentialsNotFoundException(responseParamName);
+	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+		if (authentication == null && !supports(authentication.getClass())) {
+			throw new PreAuthenticatedCredentialsNotFoundException("Invalid authentication type:" + authentication);
 		}
-		String xml = decodeAndInflate(request, encodedXml);
 
+		Saml2AuthenticationToken token = (Saml2AuthenticationToken) authentication;
+		String xml = token.getSaml2Response();
 		Response samlResponse = getSaml2Response(xml);
-		Assertion assertion = validateSaml2Response(request, samlResponse);
+		Assertion assertion = validateSaml2Response(token.getDestinationUrl(), samlResponse);
 
-		return extractSaml2Authentication(request, xml, samlResponse, assertion);
-	}
-
-	private Saml2Authentication extractSaml2Authentication(HttpServletRequest request,
-														   String xml,
-														   Response samlResponse,
-														   Assertion assertion) {
-		String username = assertion.getSubject().getNameID().getValue();
-		return new DefaultSaml2Authentication(
-			true,
-			username,
-			assertion,
-			samlResponse.getIssuer().getValue(),
-			null,
-			request.getParameter("RelayState"),
-			xml
+		final String username = assertion.getSubject().getNameID().getValue();
+		return new Saml2AuthenticationToken(
+			token.getSaml2Response(),
+			token.getRelayState(),
+			token.getDestinationUrl(),
+			() -> username,
+			authoritiesMapper.mapAuthorities(singletonList(new SimpleGrantedAuthority("ROLE_USER")))
 		);
 	}
 
-	private Assertion validateSaml2Response(HttpServletRequest request,
-											Response samlResponse) throws AuthenticationException {
-		String destination = request.getRequestURL().toString();
+	@Override
+	public boolean supports(Class<?> authentication) {
+		return authentication != null &&
+			Saml2AuthenticationToken.class.isAssignableFrom(authentication);
+	}
 
+
+	private Assertion validateSaml2Response(String destination,
+											Response samlResponse) throws AuthenticationException {
 		if (!destination.equals(samlResponse.getDestination())) {
 			throw new ProviderNotFoundException("SP Not Found at: " + samlResponse.getDestination());
 		}
@@ -137,7 +136,8 @@ public class OpenSamlAuthenticationResponseResolver implements Saml2Authenticati
 		throw new InsufficientAuthenticationException("Unable to find a valid assertion");
 	}
 
-	private boolean hasValidSignature(SignableSAMLObject samlResponse, Saml2IdentityProviderRegistration idp) {
+	private boolean hasValidSignature(SignableSAMLObject samlResponse,
+									  Saml2IdentityProviderRegistration idp) {
 		if (!samlResponse.isSigned()) {
 			return false;
 		}

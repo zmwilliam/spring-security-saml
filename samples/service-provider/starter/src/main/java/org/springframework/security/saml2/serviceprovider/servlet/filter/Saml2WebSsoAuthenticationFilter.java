@@ -20,48 +20,60 @@ package org.springframework.security.saml2.serviceprovider.servlet.filter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.saml2.serviceprovider.servlet.authentication.Saml2AuthenticationResponseResolver;
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
+import org.springframework.security.saml2.serviceprovider.util.Saml2EncodingUtils;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
-	private static Log logger = LogFactory.getLog(Saml2WebSsoAuthenticationFilter.class);
-	private final Saml2AuthenticationResponseResolver authenticationTokenResolver;
-	private final RequestMatcher matcher;
-
-	public Saml2WebSsoAuthenticationFilter(Saml2AuthenticationResponseResolver authenticationTokenResolver,
-										   RequestMatcher matcher
-	) {
-		super(matcher);
-		this.matcher = matcher;
-		this.authenticationTokenResolver = authenticationTokenResolver;
+	public Saml2WebSsoAuthenticationFilter(String filterProcessUrl) {
+		super(filterProcessUrl);
 		setAllowSessionCreation(true);
 		setSessionAuthenticationStrategy(new ChangeSessionIdAuthenticationStrategy());
-		setAuthenticationManager(authentication -> authentication);
 	}
 
 	@Override
 	protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
-		return (matcher.matches(request) && request.getParameter("SAMLResponse") != null);
+		return (super.requiresAuthentication(request, response) &&
+			hasText(request.getParameter("SAMLResponse")));
 	}
 
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 		throws AuthenticationException {
-		logger.debug("Attempting to resolve SAML2 WebSSO SAMLResponse");
-		Authentication auth = authenticationTokenResolver.resolveSaml2Authentication(request, response);
-		if (auth != null) {
-			logger.debug("SAML2 Authentication with:" + auth.getName() + " authenticated: " + auth.isAuthenticated() );
+		if (!requiresAuthentication(request, response)) {
+			throw new PreAuthenticatedCredentialsNotFoundException("Missing SAML2 response data");
 		}
-		return getAuthenticationManager().authenticate(auth);
+		String saml2Response = request.getParameter("SAMLResponse");
+		byte[] b = Saml2EncodingUtils.decode(saml2Response);
+
+		String responseXml = deflateIfRequired(request, b);
+		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
+			responseXml,
+			request.getParameter("RelayState"),
+			request.getRequestURL().toString(),
+			null,
+			null
+		);
+		return getAuthenticationManager().authenticate(authentication);
+	}
+
+	private String deflateIfRequired(HttpServletRequest request, byte[] b) {
+		if (HttpMethod.GET.matches(request.getMethod())) {
+			return Saml2EncodingUtils.inflate(b);
+		}
+		else {
+			return new String(b, UTF_8);
+		}
 	}
 
 }

@@ -31,6 +31,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 import org.joda.time.DateTime;
@@ -92,7 +93,8 @@ public class ServiceProviderSampleTests {
 	@Test
 	@DisplayName("test signed response")
 	void signedResponse() throws Exception {
-		Assertion assertion = buildAssertion();
+		final String username = "testuser@spring.security.saml";
+		Assertion assertion = buildAssertion(username);
 		Response response = buildResponse(assertion);
 		signXmlObject(response, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
@@ -104,17 +106,18 @@ public class ServiceProviderSampleTests {
 		)
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated());
+			.andExpect(authenticated().withUsername(username));
 	}
 
 	@Test
 	@DisplayName("test signed assertion")
 	void signedAssertion() throws Exception {
-		Assertion assertion = buildAssertion();
+		final String username = "testuser@spring.security.saml";
+		Assertion assertion = buildAssertion(username);
 		Response response = buildResponse(assertion);
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		mockMvc.perform(
+		final ResultActions actions = mockMvc.perform(
 			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
 				.contextPath("/sample-sp")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -122,13 +125,15 @@ public class ServiceProviderSampleTests {
 		)
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated());
+			.andExpect(authenticated().withUsername(username));
 	}
+
+
 
 	@Test
 	@DisplayName("unsigned response")
 	void unsigned() throws Exception {
-		Assertion assertion = buildAssertion();
+		Assertion assertion = buildAssertion("testuser@spring.security.saml");
 		Response response = buildResponse(assertion);
 		String xml = toXml(response);
 		mockMvc.perform(
@@ -151,11 +156,11 @@ public class ServiceProviderSampleTests {
 		return response;
 	}
 
-	private Assertion buildAssertion() {
+	private Assertion buildAssertion(String username) {
 		Assertion assertion = SAML2ActionTestingSupport.buildAssertion();
 		assertion.setIssueInstant(DateTime.now());
 		assertion.setIssuer(buildIssuer("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php"));
-		assertion.setSubject(buildSubject("testuser@spring.security.saml"));
+		assertion.setSubject(buildSubject(username));
 		assertion.setConditions(buildConditions());
 
 		SubjectConfirmation subjectConfirmation = buildSubjectConfirmation();
