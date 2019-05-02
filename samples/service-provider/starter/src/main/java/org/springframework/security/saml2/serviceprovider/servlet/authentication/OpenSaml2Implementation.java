@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
-public final class OpenSaml2Implementation {
+final class OpenSaml2Implementation {
 
 	private BasicParserPool parserPool;
 	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);

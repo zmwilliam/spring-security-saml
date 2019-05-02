@@ -29,7 +29,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
-import org.springframework.security.saml2.serviceprovider.servlet.authentication.OpenSaml2Implementation;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -81,8 +80,6 @@ public class ServiceProviderSampleTests {
 	public static final String LOCAL_SP_ENTITY_ID = "http://localhost:8080/sample-sp";
 	@Autowired
 	MockMvc mockMvc;
-
-	private OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
