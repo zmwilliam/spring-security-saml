@@ -24,7 +24,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
-import org.springframework.security.saml2.serviceprovider.util.Saml2EncodingUtils;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;

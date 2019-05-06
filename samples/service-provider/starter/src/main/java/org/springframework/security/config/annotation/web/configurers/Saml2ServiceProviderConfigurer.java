@@ -27,7 +27,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
-import org.springframework.security.saml2.serviceprovider.servlet.authentication.Saml2AuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;

@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.servlet.authentication;
+package org.springframework.security.saml2.serviceprovider.authentication;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -37,12 +37,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.saml2.Saml2Exception;
-import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.assertion.ValidationContext;
@@ -69,10 +69,13 @@ import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 
+import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
 public class Saml2AuthenticationProvider implements AuthenticationProvider {
+
+	private static Log logger = LogFactory.getLog(Saml2AuthenticationProvider.class);
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
 	private final String localSpEntityId;
@@ -91,15 +94,15 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		if (authentication == null && !supports(authentication.getClass())) {
-			throw new PreAuthenticatedCredentialsNotFoundException("Invalid authentication type:" + authentication);
+			throw new AuthenticationCredentialsNotFoundException("Invalid authentication type:" + authentication);
 		}
 
 		Saml2AuthenticationToken token = (Saml2AuthenticationToken) authentication;
 		String xml = token.getSaml2Response();
 		Response samlResponse = getSaml2Response(xml);
-		Assertion assertion = validateSaml2Response(token.getDestinationUrl(), samlResponse);
+		Assertion assertion = validateSaml2Response(token.getRecipientUrl(), samlResponse);
 
-		final String username = assertion.getSubject().getNameID().getValue();
+		final String username = getUsername(assertion);
 		return new Saml2AuthenticationToken(
 			token.getSaml2Response(),
 			() -> username,
@@ -117,18 +120,25 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			Saml2AuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
+	private String getUsername(Assertion assertion) {
+		return assertion.getSubject().getNameID().getValue();
+	}
 
-	private Assertion validateSaml2Response(String destination,
+	private Assertion validateSaml2Response(String recipient,
 											Response samlResponse) throws AuthenticationException {
-		if (!destination.equals(samlResponse.getDestination())) {
+		if (!recipient.equals(samlResponse.getDestination())) {
 			throw new ProviderNotFoundException("SP Not Found at: " + samlResponse.getDestination());
 		}
 
 		final String issuer = samlResponse.getIssuer().getValue();
+		logger.debug("Processing SAML response from "+issuer);
 		final Saml2IdentityProviderRegistration idp = idps.getIdentityProvider(issuer);
+		if (idp == null) {
+			throw new ProviderNotFoundException(format("SAML 2 Provider for %s was not found.", issuer));
+		}
 		boolean responseSigned = hasValidSignature(samlResponse, idp);
 		for (Assertion a : samlResponse.getAssertions()) {
-			if (isValidAssertion(destination, a, idp, !responseSigned)) {
+			if (isValidAssertion(recipient, a, idp, !responseSigned)) {
 				return a;
 			}
 		}
@@ -166,6 +176,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		validationParams.put(SAML2AssertionValidationParameters.SC_VALID_RECIPIENTS, singleton(recipient));
 
 		if (signatureRequired && !hasValidSignature(a, idp)) {
+			logger.debug(format("Assertion [%s] does not a valid signature.", a.getID()));
 			return false;
 		}
 		a.setSignature(null);
@@ -176,6 +187,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			final ValidationResult result = validator.validate(a, vctx);
 			return result.equals(ValidationResult.VALID);
 		} catch (AssertionValidationException e) {
+			logger.debug("Failed to validate assertion:", e);
 			return false;
 		}
 

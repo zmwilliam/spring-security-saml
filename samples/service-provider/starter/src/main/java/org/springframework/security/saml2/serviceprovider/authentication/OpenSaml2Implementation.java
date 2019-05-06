@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.servlet.authentication;
+package org.springframework.security.saml2.serviceprovider.authentication;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
