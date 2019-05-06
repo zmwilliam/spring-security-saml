@@ -26,15 +26,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.saml2.Saml2Exception;
@@ -42,7 +41,6 @@ import org.springframework.security.saml2.serviceprovider.authentication.Saml2Au
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
-import org.springframework.security.saml2.serviceprovider.util.Saml2EncodingUtils;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 
 import org.opensaml.saml.common.SignableSAMLObject;
@@ -71,7 +69,6 @@ import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
@@ -105,11 +102,13 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		final String username = assertion.getSubject().getNameID().getValue();
 		return new Saml2AuthenticationToken(
 			token.getSaml2Response(),
-			token.getRelayState(),
-			token.getDestinationUrl(),
 			() -> username,
-			authoritiesMapper.mapAuthorities(singletonList(new SimpleGrantedAuthority("ROLE_USER")))
+			authoritiesMapper.mapAuthorities(getAssertionAuthorities(assertion))
 		);
+	}
+
+	protected List<? extends GrantedAuthority> getAssertionAuthorities(Assertion assertion) {
+		return singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 	}
 
 	@Override
@@ -191,16 +190,6 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			return (Response) result;
 		}
 		throw new ClassCastException(result.getClass().getName());
-	}
-
-	private String decodeAndInflate(HttpServletRequest request, String encodedXml) {
-		byte[] b = Saml2EncodingUtils.decode(encodedXml);
-		if (HttpMethod.GET.matches(request.getMethod())) {
-			return Saml2EncodingUtils.inflate(b);
-		}
-		else {
-			return new String(b, UTF_8);
-		}
 	}
 
 	private SAML20AssertionValidator getAssertionValidator(Saml2IdentityProviderRegistration provider) {

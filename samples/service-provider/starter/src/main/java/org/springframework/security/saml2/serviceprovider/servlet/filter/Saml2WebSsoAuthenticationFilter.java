@@ -59,10 +59,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		String responseXml = deflateIfRequired(request, b);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
 			responseXml,
-			request.getParameter("RelayState"),
-			request.getRequestURL().toString(),
-			null,
-			null
+			request.getRequestURL().toString()
 		);
 		return getAuthenticationManager().authenticate(authentication);
 	}

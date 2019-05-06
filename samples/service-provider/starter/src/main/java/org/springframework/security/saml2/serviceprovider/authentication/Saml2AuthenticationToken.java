@@ -25,21 +25,25 @@ import org.springframework.security.core.GrantedAuthority;
 
 public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 	private final String saml2Response;
-	private final String relayState;
 	private final String destinationUrl;
 	private final AuthenticatedPrincipal principal;
 
 	public Saml2AuthenticationToken(String saml2Response,
-									String relayState,
-									String destinationUrl,
+									String destinationUrl) {
+		super(null);
+		this.saml2Response = saml2Response;
+		this.destinationUrl = destinationUrl;
+		this.principal = null;
+	}
+
+	public Saml2AuthenticationToken(String saml2Response,
 									AuthenticatedPrincipal principal,
 									Collection<? extends GrantedAuthority> authorities) {
 		super(authorities);
 		this.saml2Response = saml2Response;
-		this.relayState = relayState;
-		this.destinationUrl = destinationUrl;
+		this.destinationUrl = null;
 		this.principal = principal;
-		setAuthenticated(authorities != null);
+		setAuthenticated(true);
 	}
 
 	@Override
@@ -56,9 +60,6 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 		return saml2Response;
 	}
 
-	public String getRelayState() {
-		return relayState;
-	}
 
 	public String getDestinationUrl() {
 		return destinationUrl;
