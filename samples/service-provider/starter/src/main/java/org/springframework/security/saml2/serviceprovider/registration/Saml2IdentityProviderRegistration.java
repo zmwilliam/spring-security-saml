@@ -17,6 +17,7 @@
 
 package org.springframework.security.saml2.serviceprovider.registration;
 
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ public class Saml2IdentityProviderRegistration {
 	private String alias;
 	private String linktext;
 	private String entityId;
-	private List<Saml2KeyData> verificationKeys;
+	private List<X509Certificate> verificationKeys;
 
 	public Saml2IdentityProviderRegistration() {
 	}
@@ -56,11 +57,11 @@ public class Saml2IdentityProviderRegistration {
 		this.entityId = entityId;
 	}
 
-	public List<Saml2KeyData> getVerificationKeys() {
+	public List<X509Certificate> getVerificationKeys() {
 		return verificationKeys;
 	}
 
-	public void setVerificationKeys(List<Saml2KeyData> verificationKeys) {
+	public void setVerificationKeys(List<X509Certificate> verificationKeys) {
 		this.verificationKeys = verificationKeys;
 	}
 }

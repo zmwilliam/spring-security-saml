@@ -17,7 +17,6 @@
 
 package org.springframework.security.saml2.serviceprovider.authentication;
 
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Collections;
@@ -61,7 +60,6 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialResolver;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.impl.CollectionCredentialResolver;
-import org.opensaml.security.x509.X509Support;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignaturePrevalidator;
@@ -153,8 +151,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		if (idp.getVerificationKeys().isEmpty()) {
 			return false;
 		}
-		for (Saml2KeyData key : idp.getVerificationKeys()) {
-			final Credential credential = getBasicCredential(key);
+		for (X509Certificate key : idp.getVerificationKeys()) {
+			final Credential credential = getVerificationCredential(key);
 			try {
 				SignatureValidator.validate(samlResponse.getSignature(), credential);
 				return true;
@@ -215,8 +213,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		List<StatementValidator> statements = Collections.emptyList();
 
 		Set<Credential> credentials = new HashSet<>();
-		for (Saml2KeyData key : provider.getVerificationKeys()) {
-			final Credential cred = getBasicCredential(key);
+		for (X509Certificate key : provider.getVerificationKeys()) {
+			final Credential cred = getVerificationCredential(key);
 			credentials.add(cred);
 		}
 		CredentialResolver credentialsResolver = new CollectionCredentialResolver(credentials);
@@ -235,12 +233,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		);
 	}
 
-	private Credential getBasicCredential(Saml2KeyData key) {
-		try {
-			final X509Certificate certificate = X509Support.decodeCertificate(key.getCertificate());
-			return CredentialSupport.getSimpleCredential(certificate, null);
-		} catch (CertificateException e) {
-			throw new Saml2Exception(e);
-		}
+	private Credential getVerificationCredential(X509Certificate certificate) {
+		return CredentialSupport.getSimpleCredential(certificate, null);
 	}
 }

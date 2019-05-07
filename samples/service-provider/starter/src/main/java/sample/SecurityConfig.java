@@ -17,6 +17,9 @@
 
 package sample;
 
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -24,8 +27,9 @@ import org.springframework.security.config.annotation.web.configurers.Saml2Servi
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyType;
 
+import org.opensaml.security.x509.X509Support;
+
 import static java.util.Collections.singletonList;
-import static org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData.signatureVerificationKey;
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -48,12 +52,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					)
 					.addIdentityProvider(idp -> {
 							idp.setEntityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
-							idp.setVerificationKeys(singletonList(
-								signatureVerificationKey(
-									"simplesamlphp-verification-key",
-									idpCertificate
-								)
-							));
+							idp.setVerificationKeys(singletonList(getCertificate(idpCertificate)));
 						}
 					)
 			)
@@ -66,6 +65,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 		;
 		//@formatter:on
+	}
+
+	private X509Certificate getCertificate(String certificate) {
+		try {
+			return X509Support.decodeCertificate(certificate);
+		} catch (CertificateException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	//service provider keys (local keys)
