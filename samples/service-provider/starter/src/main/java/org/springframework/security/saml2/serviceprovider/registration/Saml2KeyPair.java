@@ -17,27 +17,26 @@
 
 package org.springframework.security.saml2.serviceprovider.registration;
 
-public enum Saml2KeyType {
-	SIGNING("signing"),
-	UNSPECIFIED("unspecified"),
-	ENCRYPTION("encryption");
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
-	private final String type;
+public class Saml2KeyPair {
 
-	Saml2KeyType(String type) {
-		this.type = type;
+	private final PrivateKey privateKey;
+	private final X509Certificate certificate;
+
+	public Saml2KeyPair(PrivateKey privateKey,
+						X509Certificate certificate) {
+		this.privateKey = privateKey;
+		this.certificate = certificate;
 	}
 
-	public static Saml2KeyType fromTypeName(String name) {
-		for (Saml2KeyType t : values()) {
-			if (t.getTypeName().equals(name)) {
-				return t;
-			}
-		}
-		return UNSPECIFIED;
+	public PrivateKey getPrivateKey() {
+		return privateKey;
 	}
 
-	public String getTypeName() {
-		return type;
+	public X509Certificate getCertificate() {
+		return certificate;
 	}
+
 }

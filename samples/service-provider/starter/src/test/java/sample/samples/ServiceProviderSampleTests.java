@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 import org.joda.time.DateTime;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,8 @@ import org.opensaml.core.xml.io.MarshallerFactory;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.EncryptedID;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml.saml2.core.SubjectConfirmationData;
@@ -73,6 +76,7 @@ import static sample.samples.SAML2ActionTestingSupport.buildIssuer;
 import static sample.samples.SAML2ActionTestingSupport.buildSubject;
 import static sample.samples.SAML2ActionTestingSupport.buildSubjectConfirmation;
 import static sample.samples.SAML2ActionTestingSupport.buildSubjectConfirmationData;
+import static sample.samples.Saml2TestUtils.encryptNameId;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -88,6 +92,11 @@ public class ServiceProviderSampleTests {
 	@EnableAutoConfiguration
 	@ComponentScan(basePackages = "sample")
 	public static class SpringBootApplicationTestConfig {
+	}
+
+	@BeforeAll
+	public static void initializeBouncyCastle() {
+		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 	@Test
@@ -147,12 +156,91 @@ public class ServiceProviderSampleTests {
 			.andExpect(content().string(containsString("Unable to find a valid assertion")));
 	}
 
+	@Test
+	@DisplayName("signed response encrypted assertion")
+	void signedResponseEncryptedAssertion() throws Exception {
+		final String username = "testuser@spring.security.saml";
+		Assertion assertion = buildAssertion(username);
+		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(
+			assertion,
+			X509Support.decodeCertificate(spCertificate)
+		);
+		Response response = buildResponse(encryptedAssertion);
+		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
+		String xml = toXml(response);
+		final ResultActions actions = mockMvc.perform(
+			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
+				.contextPath("/sample-sp")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
+		)
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sample-sp/"))
+			.andExpect(authenticated().withUsername(username));
+	}
+
+	@Test
+	@DisplayName("unsigned response encrypted assertion")
+	void unsignedResponseEncryptedAssertion() throws Exception {
+		final String username = "testuser@spring.security.saml";
+		Assertion assertion = buildAssertion(username);
+		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(
+			assertion,
+			X509Support.decodeCertificate(spCertificate)
+		);
+		Response response = buildResponse(encryptedAssertion);
+		String xml = toXml(response);
+		final ResultActions actions = mockMvc.perform(
+			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
+				.contextPath("/sample-sp")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
+		)
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sample-sp/"))
+			.andExpect(authenticated().withUsername(username));
+	}
+
+	@Test
+	@DisplayName("signed response encrypted nameID")
+	void signedResponseEncryptedNameId() throws Exception {
+		final String username = "testuser@spring.security.saml";
+		Assertion assertion = buildAssertion(username);
+		final EncryptedID nameId =
+			encryptNameId(assertion.getSubject().getNameID(), X509Support.decodeCertificate(spCertificate));
+		assertion.getSubject().setEncryptedID(nameId);
+		assertion.getSubject().setNameID(null);
+		Response response = buildResponse(assertion);
+		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
+		String xml = toXml(response);
+		final ResultActions actions = mockMvc.perform(
+			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
+				.contextPath("/sample-sp")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
+		)
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sample-sp/"))
+			.andExpect(authenticated().withUsername(username));
+	}
+
 	private Response buildResponse(Assertion assertion) {
+		Response response = buildResponse();
+		response.getAssertions().add(assertion);
+		return response;
+	}
+
+	private Response buildResponse(EncryptedAssertion assertion) {
+		Response response = buildResponse();
+		response.getEncryptedAssertions().add(assertion);
+		return response;
+	}
+
+	private Response buildResponse() {
 		Response response = SAML2ActionTestingSupport.buildResponse();
 		response.setID("_" + UUID.randomUUID().toString());
 		response.setDestination("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
 		response.setIssuer(buildIssuer("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php"));
-		response.getAssertions().add(assertion);
 		return response;
 	}
 
@@ -256,4 +344,19 @@ public class ServiceProviderSampleTests {
 		"BZrn8SdDlQqalMxUBYEFwnsYD3cQ8yOUnijFVC4xNcdDv8OIqVgSk4KKxU5AshaA\n" +
 		"xk6Mox+u8Cc2eAK12H13i+8=\n" +
 		"-----END PRIVATE KEY-----\n";
+
+	private String spCertificate = "MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n" +
+		"VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG\n" +
+		"A1UECgwUU3ByaW5nIFNlY3VyaXR5IFNBTUwxCzAJBgNVBAsMAnNwMSAwHgYDVQQD\n" +
+		"DBdzcC5zcHJpbmcuc2VjdXJpdHkuc2FtbDAeFw0xODA1MTQxNDMwNDRaFw0yODA1\n" +
+		"MTExNDMwNDRaMIGEMQswCQYDVQQGEwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjES\n" +
+		"MBAGA1UEBwwJVmFuY291dmVyMR0wGwYDVQQKDBRTcHJpbmcgU2VjdXJpdHkgU0FN\n" +
+		"TDELMAkGA1UECwwCc3AxIDAeBgNVBAMMF3NwLnNwcmluZy5zZWN1cml0eS5zYW1s\n" +
+		"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDRu7/EI0BlNzMEBFVAcbx+lLos\n" +
+		"vzIWU+01dGTY8gBdhMQNYKZ92lMceo2CuVJ66cUURPym3i7nGGzoSnAxAre+0YIM\n" +
+		"+U0razrWtAUE735bkcqELZkOTZLelaoOztmWqRbe5OuEmpewH7cx+kNgcVjdctOG\n" +
+		"y3Q6x+I4qakY/9qhBQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAAeViTvHOyQopWEi\n" +
+		"XOfI2Z9eukwrSknDwq/zscR0YxwwqDBMt/QdAODfSwAfnciiYLkmEjlozWRtOeN+\n" +
+		"qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD\n" +
+		"RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B";
 }

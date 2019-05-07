@@ -36,16 +36,23 @@ import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
+import org.opensaml.saml.saml2.encryption.EncryptedElementTypeEncryptedKeyResolver;
+import org.opensaml.xmlsec.encryption.support.ChainingEncryptedKeyResolver;
+import org.opensaml.xmlsec.encryption.support.EncryptedKeyResolver;
+import org.opensaml.xmlsec.encryption.support.InlineEncryptedKeyResolver;
+import org.opensaml.xmlsec.encryption.support.SimpleRetrievalMethodEncryptedKeyResolver;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static java.util.Arrays.asList;
 
 final class OpenSaml2Implementation {
 
 	private BasicParserPool parserPool;
 	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);
+	private EncryptedKeyResolver encryptedKeyResolver;
 
 	OpenSaml2Implementation() {
 		this(new BasicParserPool());
@@ -76,6 +83,10 @@ final class OpenSaml2Implementation {
 			return parsed;
 		}
 		throw new Saml2Exception("Deserialization not supported for given data set");
+	}
+
+	EncryptedKeyResolver getEncryptedKeyResolver() {
+		return encryptedKeyResolver;
 	}
 
 	/*
@@ -149,6 +160,14 @@ final class OpenSaml2Implementation {
 		}
 
 		registry.setParserPool(getParserPool());
+
+		encryptedKeyResolver = new ChainingEncryptedKeyResolver(
+			asList(
+				new InlineEncryptedKeyResolver(),
+				new EncryptedElementTypeEncryptedKeyResolver(),
+				new SimpleRetrievalMethodEncryptedKeyResolver()
+			)
+		);
 	}
 
 	private UnmarshallerFactory getUnmarshallerFactory() {

@@ -35,10 +35,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,13 +55,21 @@ import org.opensaml.saml.saml2.assertion.SubjectConfirmationValidator;
 import org.opensaml.saml.saml2.assertion.impl.AudienceRestrictionConditionValidator;
 import org.opensaml.saml.saml2.assertion.impl.BearerSubjectConfirmationValidator;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.EncryptedID;
+import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialResolver;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.impl.CollectionCredentialResolver;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
+import org.opensaml.xmlsec.encryption.support.DecryptionException;
+import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
+import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignaturePrevalidator;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
@@ -77,12 +86,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
 	private final String localSpEntityId;
-	private final List<Saml2KeyData> localKeys;//used for decryption
+	private final List<Saml2KeyPair> localKeys;//used for decryption
 	private final Saml2IdentityProviderRepository idps;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 
 	public Saml2AuthenticationProvider(String localSpEntityId,
-									   List<Saml2KeyData> localKeys,
+									   List<Saml2KeyPair> localKeys,
 									   Saml2IdentityProviderRepository idpRepository) {
 		this.localSpEntityId = localSpEntityId;
 		this.localKeys = localKeys;
@@ -101,6 +110,9 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		Assertion assertion = validateSaml2Response(token.getRecipientUrl(), samlResponse);
 
 		final String username = getUsername(assertion);
+		if (username == null) {
+			throw new UsernameNotFoundException("Assertion ["+assertion.getID()+"] is missing a user identifier");
+		}
 		return new Saml2AuthenticationToken(
 			token.getSaml2Response(),
 			() -> username,
@@ -119,7 +131,24 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	}
 
 	private String getUsername(Assertion assertion) {
-		return assertion.getSubject().getNameID().getValue();
+		final Subject subject = assertion.getSubject();
+		if (subject == null) {
+			return null;
+		}
+		if (subject.getNameID() != null) {
+			return subject.getNameID().getValue();
+		}
+		if (subject.getEncryptedID() != null) {
+			for (Saml2KeyPair key : localKeys) {
+				try {
+					NameID nameId = decrypt(subject.getEncryptedID());
+					return nameId.getValue();
+				} catch (Saml2Exception e) {
+					logger.debug("Unable to decrypt encrypted NameID for assertion["+assertion.getID()+"]");
+				}
+			}
+		}
+		return null;
 	}
 
 	private Assertion validateSaml2Response(String recipient,
@@ -137,6 +166,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		boolean responseSigned = hasValidSignature(samlResponse, idp);
 		for (Assertion a : samlResponse.getAssertions()) {
 			if (isValidAssertion(recipient, a, idp, !responseSigned)) {
+				return a;
+			}
+		}
+		for (EncryptedAssertion ea : samlResponse.getEncryptedAssertions()) {
+			Assertion a = decrypt(ea);
+			if (isValidAssertion(recipient, a, idp, false)) {
 				return a;
 			}
 		}
@@ -236,4 +271,39 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	private Credential getVerificationCredential(X509Certificate certificate) {
 		return CredentialSupport.getSimpleCredential(certificate, null);
 	}
+
+	private Decrypter getDecrypter(Saml2KeyPair key) {
+		Credential credential = CredentialSupport.getSimpleCredential(key.getCertificate(), key.getPrivateKey());
+		KeyInfoCredentialResolver resolver = new StaticKeyInfoCredentialResolver(credential);
+		Decrypter decrypter = new Decrypter(null, resolver, saml.getEncryptedKeyResolver());
+		decrypter.setRootInNewDocument(true);
+		return decrypter;
+	}
+
+	private Assertion decrypt(EncryptedAssertion assertion) {
+		Saml2Exception last = null;
+		for (Saml2KeyPair key : localKeys) {
+			final Decrypter decrypter = getDecrypter(key);
+			try {
+				return decrypter.decrypt(assertion);
+			} catch (DecryptionException e) {
+				throw new Saml2Exception(e);
+			}
+		}
+		throw last;
+	}
+
+	private NameID decrypt(EncryptedID assertion) {
+		Saml2Exception last = null;
+		for (Saml2KeyPair key : localKeys) {
+			final Decrypter decrypter = getDecrypter(key);
+			try {
+				return (NameID) decrypter.decrypt(assertion);
+			} catch (DecryptionException e) {
+				last = new Saml2Exception(e);
+			}
+		}
+		throw last;
+	}
+
 }

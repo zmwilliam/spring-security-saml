@@ -26,7 +26,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -38,7 +38,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	}
 
 	private String serviceProviderEntityId = null;
-	private List<Saml2KeyData> serviceProviderKeys = new LinkedList<>();
+	private List<Saml2KeyPair> serviceProviderKeys = new LinkedList<>();
 	private List<Saml2IdentityProviderRegistration> providers = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
@@ -47,7 +47,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2KeyData key) {
+	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2KeyPair key) {
 		serviceProviderKeys.add(key);
 		return this;
 	}

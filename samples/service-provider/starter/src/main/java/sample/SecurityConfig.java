@@ -17,6 +17,10 @@
 
 package sample;
 
+import java.io.CharArrayReader;
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -24,9 +28,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyData;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyType;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
 
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.opensaml.security.x509.X509Support;
 
 import static java.util.Collections.singletonList;
@@ -42,14 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.apply(
 				Saml2ServiceProviderConfigurer.saml2Login()
 					.serviceProviderEntityId("http://localhost:8080/sample-sp")
-					.addServiceProviderKey(new Saml2KeyData(
-							"sp-signing-key",
-							privateKey,
-							certificate,
-							privateKeyPassphrase,
-							Saml2KeyType.SIGNING
-						)
-					)
+					.addServiceProviderKey(getLocalSpKey())
 					.addIdentityProvider(idp -> {
 							idp.setEntityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
 							idp.setVerificationKeys(singletonList(getCertificate(idpCertificate)));
@@ -67,10 +69,46 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		//@formatter:on
 	}
 
+	private Saml2KeyPair getLocalSpKey() {
+		PrivateKey pkey = readPrivateKey(privateKey, privateKeyPassphrase);
+		X509Certificate spCert = getCertificate(certificate);
+		return new Saml2KeyPair(pkey, spCert);
+	}
+
 	private X509Certificate getCertificate(String certificate) {
 		try {
 			return X509Support.decodeCertificate(certificate);
 		} catch (CertificateException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	private PrivateKey readPrivateKey(String pem, String passphrase) {
+
+		try {
+			PEMParser parser = new PEMParser(new CharArrayReader(pem.toCharArray()));
+			Object obj = parser.readObject();
+			parser.close();
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			KeyPair kp;
+			if (obj == null) {
+				throw new IllegalArgumentException("Unable to decode PEM key:" + pem);
+			}
+			else if (obj instanceof PEMEncryptedKeyPair) {
+				// Encrypted key - we will use provided password
+				PEMEncryptedKeyPair ckp = (PEMEncryptedKeyPair) obj;
+				PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(passphrase
+					.toCharArray());
+				kp = converter.getKeyPair(ckp.decryptKeyPair(decProv));
+			}
+			else {
+				// Unencrypted key - no password needed
+				PEMKeyPair ukp = (PEMKeyPair) obj;
+				kp = converter.getKeyPair(ukp);
+			}
+
+			return kp.getPrivate();
+		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
@@ -95,8 +133,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		"LYiQp/YgFlmoE4bcGuCiaRfUJZCwooPK2dQMoIvMZeVl9ExUGdXVMg==\n" +
 		"-----END RSA PRIVATE KEY-----";
 	private String privateKeyPassphrase = "sppassword";
-	private String certificate = "-----BEGIN CERTIFICATE-----\n" +
-		"MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n" +
+	private String certificate = "MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n" +
 		"VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG\n" +
 		"A1UECgwUU3ByaW5nIFNlY3VyaXR5IFNBTUwxCzAJBgNVBAsMAnNwMSAwHgYDVQQD\n" +
 		"DBdzcC5zcHJpbmcuc2VjdXJpdHkuc2FtbDAeFw0xODA1MTQxNDMwNDRaFw0yODA1\n" +
@@ -109,8 +146,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		"y3Q6x+I4qakY/9qhBQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAAeViTvHOyQopWEi\n" +
 		"XOfI2Z9eukwrSknDwq/zscR0YxwwqDBMt/QdAODfSwAfnciiYLkmEjlozWRtOeN+\n" +
 		"qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD\n" +
-		"RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B\n" +
-		"-----END CERTIFICATE-----";
+		"RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B";
 
 	private String idpCertificate = "MIIEEzCCAvugAwIBAgIJAIc1qzLrv+5nMA0GCSqGSIb3DQEBCwUAMIGfMQswCQYD\n" +
 		"VQQGEwJVUzELMAkGA1UECAwCQ08xFDASBgNVBAcMC0Nhc3RsZSBSb2NrMRwwGgYD\n" +
