@@ -87,9 +87,18 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
 	private final Saml2ServiceProviderRegistration serviceProvider;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
+	private int clockSkewMillis = 1000 * 60 * 5; //5 minutes
 
 	public Saml2AuthenticationProvider(Saml2ServiceProviderRegistration serviceProvider) {
 		this.serviceProvider = serviceProvider;
+	}
+
+	public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
+		this.authoritiesMapper = authoritiesMapper;
+	}
+
+	public void setClockSkewMillis(int clockSkewMillis) {
+		this.clockSkewMillis = clockSkewMillis;
 	}
 
 	@Override
@@ -198,7 +207,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		final SAML20AssertionValidator validator = getAssertionValidator(idp);
 		Map<String, Object> validationParams = new HashMap<>();
 		validationParams.put(SAML2AssertionValidationParameters.SIGNATURE_REQUIRED, false);
-		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMinutes(5));
+		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMillis(clockSkewMillis));
 		validationParams.put(
 			SAML2AssertionValidationParameters.COND_VALID_AUDIENCES,
 			singleton(serviceProvider.getEntityId())
