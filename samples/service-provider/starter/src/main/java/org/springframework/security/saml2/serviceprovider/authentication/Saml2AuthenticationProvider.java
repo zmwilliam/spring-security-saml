@@ -37,9 +37,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2IdentityProviderRegistration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -85,17 +85,11 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	private static Log logger = LogFactory.getLog(Saml2AuthenticationProvider.class);
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation().init();
-	private final String localSpEntityId;
-	private final List<Saml2KeyPair> localKeys;//used for decryption
-	private final Saml2IdentityProviderRepository idps;
+	private final Saml2ServiceProviderRegistration serviceProvider;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 
-	public Saml2AuthenticationProvider(String localSpEntityId,
-									   List<Saml2KeyPair> localKeys,
-									   Saml2IdentityProviderRepository idpRepository) {
-		this.localSpEntityId = localSpEntityId;
-		this.localKeys = localKeys;
-		idps = idpRepository;
+	public Saml2AuthenticationProvider(Saml2ServiceProviderRegistration serviceProvider) {
+		this.serviceProvider = serviceProvider;
 	}
 
 	@Override
@@ -139,7 +133,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			return subject.getNameID().getValue();
 		}
 		if (subject.getEncryptedID() != null) {
-			for (Saml2KeyPair key : localKeys) {
+			for (Saml2KeyPair key : serviceProvider.getSaml2Keys()) {
 				try {
 					NameID nameId = decrypt(subject.getEncryptedID());
 					return nameId.getValue();
@@ -159,7 +153,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 		final String issuer = samlResponse.getIssuer().getValue();
 		logger.debug("Processing SAML response from "+issuer);
-		final Saml2IdentityProviderRegistration idp = idps.getIdentityProvider(issuer);
+		final Saml2IdentityProviderRegistration idp = serviceProvider.getIdentityProvider(issuer);
 		if (idp == null) {
 			throw new ProviderNotFoundException(format("SAML 2 Provider for %s was not found.", issuer));
 		}
@@ -205,7 +199,10 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		Map<String, Object> validationParams = new HashMap<>();
 		validationParams.put(SAML2AssertionValidationParameters.SIGNATURE_REQUIRED, false);
 		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMinutes(5));
-		validationParams.put(SAML2AssertionValidationParameters.COND_VALID_AUDIENCES, singleton(localSpEntityId));
+		validationParams.put(
+			SAML2AssertionValidationParameters.COND_VALID_AUDIENCES,
+			singleton(serviceProvider.getEntityId())
+		);
 		validationParams.put(SAML2AssertionValidationParameters.SC_VALID_RECIPIENTS, singleton(recipient));
 
 		if (signatureRequired && !hasValidSignature(a, idp)) {
@@ -282,7 +279,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private Assertion decrypt(EncryptedAssertion assertion) {
 		Saml2Exception last = null;
-		for (Saml2KeyPair key : localKeys) {
+		for (Saml2KeyPair key : serviceProvider.getSaml2Keys()) {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return decrypter.decrypt(assertion);
@@ -295,7 +292,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private NameID decrypt(EncryptedID assertion) {
 		Saml2Exception last = null;
-		for (Saml2KeyPair key : localKeys) {
+		for (Saml2KeyPair key : serviceProvider.getSaml2Keys()) {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return (NameID) decrypter.decrypt(assertion);

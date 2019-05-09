@@ -17,17 +17,15 @@
 
 package org.springframework.security.config.annotation.web.configurers;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;
@@ -37,18 +35,16 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return new Saml2ServiceProviderConfigurer();
 	}
 
-	private String serviceProviderEntityId = null;
-	private List<Saml2KeyPair> serviceProviderKeys = new LinkedList<>();
-	private List<Saml2IdentityProviderRegistration> providers = new LinkedList<>();
+	private Saml2ServiceProviderRegistration serviceProvider = new Saml2ServiceProviderRegistration();
 	private AuthenticationProvider authenticationProvider;
 
 	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
-		this.serviceProviderEntityId = entityId;
+		this.serviceProvider.setEntityId(entityId);
 		return this;
 	}
 
 	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2KeyPair key) {
-		serviceProviderKeys.add(key);
+		this.serviceProvider.addSaml2Key(key);
 		return this;
 	}
 
@@ -60,7 +56,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	public Saml2ServiceProviderConfigurer addIdentityProvider(Consumer<Saml2IdentityProviderRegistration> idp) {
 		Saml2IdentityProviderRegistration ridp = new Saml2IdentityProviderRegistration();
 		idp.accept(ridp);
-		this.providers.add(ridp);
+		this.serviceProvider.addIdentityProvider(ridp);
 		return this;
 	}
 
@@ -72,14 +68,8 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 			.anyRequest().authenticated();
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
-		Saml2IdentityProviderRepository identityProviderRepository = new Saml2IdentityProviderRepository(providers);
 		if (authenticationProvider == null) {
-			authenticationProvider =
-				new Saml2AuthenticationProvider(
-					serviceProviderEntityId,
-					serviceProviderKeys,
-					identityProviderRepository
-				);
+			authenticationProvider = new Saml2AuthenticationProvider(serviceProvider);
 		}
 
 		builder.authenticationProvider(postProcess(authenticationProvider));
