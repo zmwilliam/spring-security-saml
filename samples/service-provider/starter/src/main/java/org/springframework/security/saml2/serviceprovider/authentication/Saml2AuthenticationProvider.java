@@ -91,7 +91,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	private final Saml2ServiceProviderRegistration serviceProviderRegistration;
 	private Saml2IdentityProviderRepository identityProviderRepository;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
-	private int clockSkewMillis = 1000 * 60 * 5; //5 minutes
+	private int responseTimeToleranceMillis = 1000 * 60 * 5; //5 minutes
 
 	public Saml2AuthenticationProvider(Saml2ServiceProviderRegistration serviceProviderRegistration,
 									   Saml2IdentityProviderRepository identityProviderRepository) {
@@ -106,8 +106,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		this.authoritiesMapper = authoritiesMapper;
 	}
 
-	public void setSamlResponseTimeSkewMillis(int samlResponseTimeSkewMillis) {
-		this.clockSkewMillis = samlResponseTimeSkewMillis;
+	public void setResponseTimeToleranceMillis(int responseTimeToleranceMillis) {
+		this.responseTimeToleranceMillis = responseTimeToleranceMillis;
 	}
 
 	@Override
@@ -215,7 +215,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		final SAML20AssertionValidator validator = getAssertionValidator(idp);
 		Map<String, Object> validationParams = new HashMap<>();
 		validationParams.put(SAML2AssertionValidationParameters.SIGNATURE_REQUIRED, false);
-		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMillis(clockSkewMillis));
+		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMillis(
+			responseTimeToleranceMillis));
 		validationParams.put(
 			SAML2AssertionValidationParameters.COND_VALID_AUDIENCES,
 			singleton(serviceProviderRegistration.getEntityId())
