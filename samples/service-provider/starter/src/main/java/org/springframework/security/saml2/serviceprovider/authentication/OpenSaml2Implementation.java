@@ -60,18 +60,11 @@ final class OpenSaml2Implementation {
 
 	OpenSaml2Implementation(BasicParserPool parserPool) {
 		this.parserPool = parserPool;
-		init();
+		performInit();
 	}
 
 	BasicParserPool getParserPool() {
 		return parserPool;
-	}
-
-	protected synchronized OpenSaml2Implementation init() {
-		if (!hasInitCompleted.get()) {
-			performInit();
-		}
-		return this;
 	}
 
 	XMLObject resolve(String xml) {
@@ -95,7 +88,7 @@ final class OpenSaml2Implementation {
 	                     PRIVATE METHODS
 	==============================================================
 	 */
-	private synchronized void performInit() {
+	private void performInit() {
 		if (hasInitCompleted.compareAndSet(false, true)) {
 			java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			bootstrap();
