@@ -17,18 +17,27 @@
 
 package org.springframework.security.config.annotation.web.configurers;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
+import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderRepository;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2IdentityProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;
+
+import static java.util.Optional.ofNullable;
 
 public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
 	public static Saml2ServiceProviderConfigurer saml2Login() {
@@ -36,6 +45,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	}
 
 	private Saml2ServiceProviderRegistration serviceProvider = new Saml2ServiceProviderRegistration();
+	private List<Saml2IdentityProviderRegistration> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
 	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
@@ -43,7 +53,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2KeyPair key) {
+	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2X509Credential key) {
 		this.serviceProvider.addSaml2Key(key);
 		return this;
 	}
@@ -56,7 +66,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	public Saml2ServiceProviderConfigurer addIdentityProvider(Consumer<Saml2IdentityProviderRegistration> idp) {
 		Saml2IdentityProviderRegistration ridp = new Saml2IdentityProviderRegistration();
 		idp.accept(ridp);
-		this.serviceProvider.addIdentityProvider(ridp);
+		this.idps.add(ridp);
 		return this;
 	}
 
@@ -69,7 +79,15 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			authenticationProvider = new Saml2AuthenticationProvider(serviceProvider);
+			Saml2IdentityProviderRepository identityProviderRepository =
+				getSharedObject(
+					builder,
+					Saml2IdentityProviderRepository.class,
+					() -> new DefaultSaml2IdentityProviderRepository(idps),
+					null
+				);
+
+			authenticationProvider = new Saml2AuthenticationProvider(serviceProvider, identityProviderRepository);
 		}
 
 		builder.authenticationProvider(postProcess(authenticationProvider));
@@ -82,5 +100,38 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		filter.setAuthenticationFailureHandler(failureHandler);
 		filter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
 		builder.addFilterAfter(filter, HeaderWriterFilter.class);
+	}
+
+
+	private <C> C getSharedObject(HttpSecurity http, Class<C> clazz) {
+		return http.getSharedObject(clazz);
+	}
+
+	private <C> void setSharedObject(HttpSecurity http, Class<C> clazz, C object) {
+		if (http.getSharedObject(clazz) == null) {
+			http.setSharedObject(clazz, object);
+		}
+	}
+
+	private <C> C getSharedObject(HttpSecurity http,
+								  Class<C> clazz,
+								  Supplier<? extends C> creator,
+								  Object existingInstance) {
+		C result = ofNullable((C) existingInstance).orElseGet(() -> getSharedObject(http, clazz));
+		if (result == null) {
+			ApplicationContext context = getSharedObject(http, ApplicationContext.class);
+			try {
+				result = context.getBean(clazz);
+			} catch (NoSuchBeanDefinitionException e) {
+				if (creator != null) {
+					result = creator.get();
+				}
+				else {
+					return null;
+				}
+			}
+		}
+		setSharedObject(http, clazz, result);
+		return result;
 	}
 }

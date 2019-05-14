@@ -17,35 +17,6 @@
 
 package org.springframework.security.saml2.serviceprovider.registration;
 
-import java.util.LinkedList;
-import java.util.List;
-
-
-/**
- * Configuration object that represents a local(hosted) service provider
- */
-public class Saml2ServiceProviderRegistration {
-
-	private String entityId;
-	private List<Saml2X509Credential> keys = new LinkedList<>();
-
-	public Saml2ServiceProviderRegistration() {
-	}
-
-	public void addSaml2Key(Saml2X509Credential key) {
-		this.keys.add(key);
-	}
-
-	public List<Saml2X509Credential> getSaml2Keys() {
-		return keys;
-	}
-
-	public String getEntityId() {
-		return entityId;
-	}
-
-	public void setEntityId(String entityId) {
-		this.entityId = entityId;
-	}
-
+public interface Saml2IdentityProviderRepository {
+	Saml2IdentityProviderRegistration getIdentityProvider(String entityId);
 }

@@ -28,7 +28,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2KeyPair;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
 
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
@@ -69,10 +69,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		//@formatter:on
 	}
 
-	private Saml2KeyPair getLocalSpKey() {
+	private Saml2X509Credential getLocalSpKey() {
 		PrivateKey pkey = readPrivateKey(privateKey, privateKeyPassphrase);
 		X509Certificate spCert = getCertificate(certificate);
-		return new Saml2KeyPair(pkey, spCert);
+		return new Saml2X509Credential(pkey, spCert);
 	}
 
 	private X509Certificate getCertificate(String certificate) {

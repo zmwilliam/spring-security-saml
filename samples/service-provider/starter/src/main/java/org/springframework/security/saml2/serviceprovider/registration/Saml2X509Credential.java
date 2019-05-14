@@ -20,13 +20,13 @@ package org.springframework.security.saml2.serviceprovider.registration;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-public class Saml2KeyPair {
+public class Saml2X509Credential {
 
 	private final PrivateKey privateKey;
 	private final X509Certificate certificate;
 
-	public Saml2KeyPair(PrivateKey privateKey,
-						X509Certificate certificate) {
+	public Saml2X509Credential(PrivateKey privateKey,
+							   X509Certificate certificate) {
 		this.privateKey = privateKey;
 		this.certificate = certificate;
 	}

@@ -17,35 +17,21 @@
 
 package org.springframework.security.saml2.serviceprovider.registration;
 
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+public class DefaultSaml2IdentityProviderRepository implements Saml2IdentityProviderRepository {
 
-/**
- * Configuration object that represents a local(hosted) service provider
- */
-public class Saml2ServiceProviderRegistration {
+	private Map<String, Saml2IdentityProviderRegistration> idps = new LinkedHashMap<>();
 
-	private String entityId;
-	private List<Saml2X509Credential> keys = new LinkedList<>();
-
-	public Saml2ServiceProviderRegistration() {
+	public DefaultSaml2IdentityProviderRepository(List<Saml2IdentityProviderRegistration> idps) {
+		idps.stream().forEach(
+			idp -> this.idps.put(idp.getEntityId(), idp)
+		);
 	}
 
-	public void addSaml2Key(Saml2X509Credential key) {
-		this.keys.add(key);
+	public Saml2IdentityProviderRegistration getIdentityProvider(String entityId) {
+		return idps.get(entityId);
 	}
-
-	public List<Saml2X509Credential> getSaml2Keys() {
-		return keys;
-	}
-
-	public String getEntityId() {
-		return entityId;
-	}
-
-	public void setEntityId(String entityId) {
-		this.entityId = entityId;
-	}
-
 }
