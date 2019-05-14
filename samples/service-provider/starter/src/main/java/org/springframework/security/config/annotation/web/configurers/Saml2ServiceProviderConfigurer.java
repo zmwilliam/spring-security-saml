@@ -29,9 +29,11 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails.Saml2IdentityProviderDetailsBuilder;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2ServiceProviderRegistrationBuilder;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -44,17 +46,17 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return new Saml2ServiceProviderConfigurer();
 	}
 
-	private Saml2ServiceProviderRegistration serviceProvider = new Saml2ServiceProviderRegistration();
-	private List<Saml2IdentityProviderRegistration> idps = new LinkedList<>();
+	private Saml2ServiceProviderRegistrationBuilder serviceProvider = Saml2ServiceProviderRegistration.builder();
+	private List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
 	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
-		this.serviceProvider.setEntityId(entityId);
+		this.serviceProvider.entityId(entityId);
 		return this;
 	}
 
 	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2X509Credential key) {
-		this.serviceProvider.addSaml2Key(key);
+		this.serviceProvider.credential(key);
 		return this;
 	}
 
@@ -63,10 +65,10 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addIdentityProvider(Consumer<Saml2IdentityProviderRegistration> idp) {
-		Saml2IdentityProviderRegistration ridp = new Saml2IdentityProviderRegistration();
+	public Saml2ServiceProviderConfigurer addIdentityProvider(Consumer<Saml2IdentityProviderDetailsBuilder> idp) {
+		Saml2IdentityProviderDetailsBuilder ridp = Saml2IdentityProviderDetails.builder();
 		idp.accept(ridp);
-		this.idps.add(ridp);
+		this.idps.add(ridp.build());
 		return this;
 	}
 
@@ -87,7 +89,10 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 					null
 				);
 
-			authenticationProvider = new Saml2AuthenticationProvider(serviceProvider, identityProviderRepository);
+			authenticationProvider = new Saml2AuthenticationProvider(
+				serviceProvider.build(),
+				identityProviderRepository
+			);
 		}
 
 		builder.authenticationProvider(postProcess(authenticationProvider));

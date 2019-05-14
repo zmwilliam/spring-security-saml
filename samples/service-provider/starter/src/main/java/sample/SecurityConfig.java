@@ -53,8 +53,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.serviceProviderEntityId("http://localhost:8080/sample-sp")
 					.addServiceProviderKey(getLocalSpKey())
 					.addIdentityProvider(idp -> {
-							idp.setEntityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
-							idp.setVerificationKeys(singletonList(getCertificate(idpCertificate)));
+							idp.entityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
+							idp.verificationCredentials(singletonList(getCertificate(idpCertificate)));
 						}
 					)
 			)

@@ -23,15 +23,15 @@ import java.util.Map;
 
 public class DefaultSaml2IdentityProviderRepository implements Saml2IdentityProviderRepository {
 
-	private Map<String, Saml2IdentityProviderRegistration> idps = new LinkedHashMap<>();
+	private Map<String, Saml2IdentityProviderDetails> idps = new LinkedHashMap<>();
 
-	public DefaultSaml2IdentityProviderRepository(List<Saml2IdentityProviderRegistration> idps) {
+	public DefaultSaml2IdentityProviderRepository(List<Saml2IdentityProviderDetails> idps) {
 		idps.stream().forEach(
 			idp -> this.idps.put(idp.getEntityId(), idp)
 		);
 	}
 
-	public Saml2IdentityProviderRegistration getIdentityProvider(String entityId) {
+	public Saml2IdentityProviderDetails getIdentityProvider(String entityId) {
 		return idps.get(entityId);
 	}
 }

@@ -26,26 +26,61 @@ import java.util.List;
  */
 public class Saml2ServiceProviderRegistration {
 
-	private String entityId;
-	private List<Saml2X509Credential> keys = new LinkedList<>();
+	private final String entityId;
+	private final List<Saml2X509Credential> credentials = new LinkedList<>();
 
-	public Saml2ServiceProviderRegistration() {
+	public static Saml2ServiceProviderRegistrationBuilder builder() {
+		return new Saml2ServiceProviderRegistrationBuilder();
 	}
 
-	public void addSaml2Key(Saml2X509Credential key) {
-		this.keys.add(key);
+	public static Saml2ServiceProviderRegistrationBuilder builder(Saml2ServiceProviderRegistration registration) {
+		return builder()
+			.credentials(registration.getSaml2Credentials())
+			.entityId(registration.getEntityId());
 	}
 
-	public List<Saml2X509Credential> getSaml2Keys() {
-		return keys;
+	private Saml2ServiceProviderRegistration(String entityId,
+											List<Saml2X509Credential> credentials) {
+		this.entityId = entityId;
+		this.credentials.addAll(credentials);
+	}
+
+	public List<Saml2X509Credential> getSaml2Credentials() {
+		return credentials;
 	}
 
 	public String getEntityId() {
 		return entityId;
 	}
 
-	public void setEntityId(String entityId) {
-		this.entityId = entityId;
+	public static final class Saml2ServiceProviderRegistrationBuilder {
+		private String entityId;
+		private List<Saml2X509Credential> credentials = new LinkedList<>();
+
+		private Saml2ServiceProviderRegistrationBuilder() {
+		}
+
+		public Saml2ServiceProviderRegistrationBuilder entityId(String entityId) {
+			this.entityId = entityId;
+			return this;
+		}
+
+		public Saml2ServiceProviderRegistrationBuilder credentials(List<Saml2X509Credential> keys) {
+			this.credentials = keys;
+			return this;
+		}
+
+		public void credential(Saml2X509Credential key) {
+			this.credentials.add(key);
+		}
+
+		public Saml2ServiceProviderRegistration build() {
+			Saml2ServiceProviderRegistration saml2ServiceProviderRegistration = new Saml2ServiceProviderRegistration(
+				entityId,
+				credentials
+			);
+			return saml2ServiceProviderRegistration;
+		}
 	}
 
 }

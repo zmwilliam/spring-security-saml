@@ -60,13 +60,14 @@ final class OpenSaml2Implementation {
 
 	OpenSaml2Implementation(BasicParserPool parserPool) {
 		this.parserPool = parserPool;
+		init();
 	}
 
 	BasicParserPool getParserPool() {
 		return parserPool;
 	}
 
-	synchronized OpenSaml2Implementation init() {
+	protected synchronized OpenSaml2Implementation init() {
 		if (!hasInitCompleted.get()) {
 			performInit();
 		}
