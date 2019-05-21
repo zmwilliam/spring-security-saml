@@ -33,7 +33,6 @@ import org.springframework.security.saml2.serviceprovider.registration.Saml2Iden
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails.Saml2IdentityProviderDetailsBuilder;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2ServiceProviderRegistrationBuilder;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -46,7 +45,8 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return new Saml2ServiceProviderConfigurer();
 	}
 
-	private Saml2ServiceProviderRegistrationBuilder serviceProvider = Saml2ServiceProviderRegistration.builder();
+	private String spEntityId = null;
+	private List<Saml2X509Credential> spCredentials = new LinkedList<>();
 	private List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
@@ -55,12 +55,12 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	}
 
 	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
-		this.serviceProvider.entityId(entityId);
+		this.spEntityId = entityId;
 		return this;
 	}
 
 	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2X509Credential key) {
-		this.serviceProvider.credential(key);
+		this.spCredentials.add(key);
 		return this;
 	}
 
@@ -94,7 +94,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 				);
 
 			authenticationProvider = new Saml2AuthenticationProvider(
-				serviceProvider.build(),
+				new Saml2ServiceProviderRegistration(spEntityId, spCredentials),
 				identityProviderRepository
 			);
 		}

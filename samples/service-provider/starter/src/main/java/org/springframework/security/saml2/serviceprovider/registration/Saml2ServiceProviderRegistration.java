@@ -22,6 +22,9 @@ import java.util.List;
 
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
+import static org.springframework.util.Assert.notEmpty;
+import static org.springframework.util.Assert.notNull;
+
 
 /**
  * Configuration object that represents a local(hosted) service provider
@@ -31,18 +34,14 @@ public class Saml2ServiceProviderRegistration {
 	private final String entityId;
 	private final List<Saml2X509Credential> credentials = new LinkedList<>();
 
-	public static Saml2ServiceProviderRegistrationBuilder builder() {
-		return new Saml2ServiceProviderRegistrationBuilder();
-	}
-
-	public static Saml2ServiceProviderRegistrationBuilder builder(Saml2ServiceProviderRegistration registration) {
-		return builder()
-			.credentials(registration.getSaml2Credentials())
-			.entityId(registration.getEntityId());
-	}
-
-	private Saml2ServiceProviderRegistration(String entityId,
+	public Saml2ServiceProviderRegistration(String entityId,
 											List<Saml2X509Credential> credentials) {
+		notNull(entityId, "entityId is required");
+		notEmpty(credentials, "at least one private key and certificate is required for signed and encrypted messages");
+		credentials.stream().forEach(c -> {
+			notNull(c.getPrivateKey(), "private key required in all credentials");
+			notNull(c.getCertificate(), "certificate required in all credentials");
+		});
 		this.entityId = entityId;
 		this.credentials.addAll(credentials);
 	}
@@ -53,36 +52,6 @@ public class Saml2ServiceProviderRegistration {
 
 	public String getEntityId() {
 		return entityId;
-	}
-
-	public static final class Saml2ServiceProviderRegistrationBuilder {
-		private String entityId;
-		private List<Saml2X509Credential> credentials = new LinkedList<>();
-
-		private Saml2ServiceProviderRegistrationBuilder() {
-		}
-
-		public Saml2ServiceProviderRegistrationBuilder entityId(String entityId) {
-			this.entityId = entityId;
-			return this;
-		}
-
-		public Saml2ServiceProviderRegistrationBuilder credentials(List<Saml2X509Credential> keys) {
-			this.credentials = keys;
-			return this;
-		}
-
-		public void credential(Saml2X509Credential key) {
-			this.credentials.add(key);
-		}
-
-		public Saml2ServiceProviderRegistration build() {
-			Saml2ServiceProviderRegistration saml2ServiceProviderRegistration = new Saml2ServiceProviderRegistration(
-				entityId,
-				credentials
-			);
-			return saml2ServiceProviderRegistration;
-		}
 	}
 
 }
