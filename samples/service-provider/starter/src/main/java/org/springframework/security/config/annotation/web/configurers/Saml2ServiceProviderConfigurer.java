@@ -57,7 +57,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addServiceProviderKey(Saml2X509Credential key) {
+	public Saml2ServiceProviderConfigurer addServiceProviderCredentials(Saml2X509Credential key) {
 		this.spCredentials.add(key);
 		return this;
 	}

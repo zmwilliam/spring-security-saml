@@ -43,7 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.apply(
 				Saml2ServiceProviderConfigurer.saml2Login()
 					.serviceProviderEntityId("http://localhost:8080/sample-sp")
-					.addServiceProviderKey(getLocalSpKey())
+					.addServiceProviderCredentials(getLocalSpCredentials())
 					.addIdentityProvider(
 						new Saml2IdentityProviderDetails(
 							"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php",
@@ -62,7 +62,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		//@formatter:on
 	}
 
-	private Saml2X509Credential getLocalSpKey() {
+	private Saml2X509Credential getLocalSpCredentials() {
 		PrivateKey pkey = readPrivateKey(privateKey, privateKeyPassphrase);
 		X509Certificate spCert = getCertificate(certificate);
 		return new Saml2X509Credential(pkey, spCert);
