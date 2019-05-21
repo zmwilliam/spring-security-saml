@@ -17,9 +17,6 @@
 
 package sample;
 
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -29,13 +26,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
 
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.opensaml.security.x509.X509Support;
 
 import static java.util.Collections.singletonList;
@@ -52,10 +44,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				Saml2ServiceProviderConfigurer.saml2Login()
 					.serviceProviderEntityId("http://localhost:8080/sample-sp")
 					.addServiceProviderKey(getLocalSpKey())
-					.addIdentityProvider(idp -> {
-							idp.entityId("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php");
-							idp.verificationCredentials(singletonList(getCertificate(idpCertificate)));
-						}
+					.addIdentityProvider(
+						new Saml2IdentityProviderDetails(
+							"http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php",
+							singletonList(getCertificate(idpCertificate))
+						)
 					)
 			)
 				.and()
@@ -84,33 +77,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	private PrivateKey readPrivateKey(String pem, String passphrase) {
-
-		try {
-			PEMParser parser = new PEMParser(new CharArrayReader(pem.toCharArray()));
-			Object obj = parser.readObject();
-			parser.close();
-			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-			KeyPair kp;
-			if (obj == null) {
-				throw new IllegalArgumentException("Unable to decode PEM key:" + pem);
-			}
-			else if (obj instanceof PEMEncryptedKeyPair) {
-				// Encrypted key - we will use provided password
-				PEMEncryptedKeyPair ckp = (PEMEncryptedKeyPair) obj;
-				PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(passphrase
-					.toCharArray());
-				kp = converter.getKeyPair(ckp.decryptKeyPair(decProv));
-			}
-			else {
-				// Unencrypted key - no password needed
-				PEMKeyPair ukp = (PEMKeyPair) obj;
-				kp = converter.getKeyPair(ukp);
-			}
-
-			return kp.getPrivate();
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return Saml2KeyConverters.pkcs8(passphrase).convert(pem);
 	}
 
 	//service provider keys (local keys)

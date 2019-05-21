@@ -19,7 +19,6 @@ package org.springframework.security.config.annotation.web.configurers;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -27,13 +26,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails.Saml2IdentityProviderDetailsBuilder;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;
@@ -69,10 +67,8 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addIdentityProvider(Consumer<Saml2IdentityProviderDetailsBuilder> idp) {
-		Saml2IdentityProviderDetailsBuilder ridp = Saml2IdentityProviderDetails.builder();
-		idp.accept(ridp);
-		this.idps.add(ridp.build());
+	public Saml2ServiceProviderConfigurer addIdentityProvider(Saml2IdentityProviderDetails idp) {
+		this.idps.add(idp);
 		return this;
 	}
 

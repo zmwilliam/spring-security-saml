@@ -20,44 +20,24 @@ package org.springframework.security.saml2.serviceprovider.registration;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import static org.springframework.util.Assert.notEmpty;
+import static org.springframework.util.Assert.notNull;
+
 /**
  * Configuration object that represents an external identity provider
  */
 public class Saml2IdentityProviderDetails {
 
-	private final String alias;
 	private final String entityId;
 	private final List<X509Certificate> verificationCredentials;
-	private final String linktext;
 
-	public static Saml2IdentityProviderDetailsBuilder builder() {
-		return new Saml2IdentityProviderDetailsBuilder();
-	}
-
-	public static Saml2IdentityProviderDetailsBuilder builder(Saml2IdentityProviderDetails details) {
-		return builder()
-			.alias(details.getAlias())
-			.entityId(details.getEntityId())
-			.verificationCredentials(details.getVerificationCredentials())
-			.linktext(details.getLinktext());
-	}
-
-	private Saml2IdentityProviderDetails(String alias,
-										String entityId,
-										List<X509Certificate> verificationCredentials,
-										String linktext) {
-		this.alias = alias;
+	public Saml2IdentityProviderDetails(String entityId,
+										 List<X509Certificate> verificationCredentials) {
+		notNull(entityId, "entityId is required");
+		notEmpty(verificationCredentials, "verification credentials are required");
+		verificationCredentials.stream().forEach(c -> notNull(c, "verification credentials cannot be null"));
 		this.entityId = entityId;
 		this.verificationCredentials = verificationCredentials;
-		this.linktext = linktext;
-	}
-
-	public String getAlias() {
-		return alias;
-	}
-
-	public String getLinktext() {
-		return linktext;
 	}
 
 	public String getEntityId() {
@@ -69,37 +49,4 @@ public class Saml2IdentityProviderDetails {
 	}
 
 
-	public static final class Saml2IdentityProviderDetailsBuilder {
-		private String alias;
-		private String entityId;
-		private List<X509Certificate> verificationCredentials;
-		private String linktext;
-
-		private Saml2IdentityProviderDetailsBuilder() {
-		}
-
-		public Saml2IdentityProviderDetailsBuilder alias(String alias) {
-			this.alias = alias;
-			return this;
-		}
-
-		public Saml2IdentityProviderDetailsBuilder entityId(String entityId) {
-			this.entityId = entityId;
-			return this;
-		}
-
-		public Saml2IdentityProviderDetailsBuilder verificationCredentials(List<X509Certificate> verificationCredentials) {
-			this.verificationCredentials = verificationCredentials;
-			return this;
-		}
-
-		public Saml2IdentityProviderDetailsBuilder linktext(String linktext) {
-			this.linktext = linktext;
-			return this;
-		}
-
-		public Saml2IdentityProviderDetails build() {
-			return new Saml2IdentityProviderDetails(alias, entityId, verificationCredentials, linktext);
-		}
-	}
 }
