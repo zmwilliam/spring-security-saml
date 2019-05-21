@@ -21,7 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.security.saml2.Saml2Exception;
 
@@ -50,21 +49,17 @@ import static java.util.Arrays.asList;
 
 final class OpenSaml2Implementation {
 
-	private BasicParserPool parserPool;
-	private final AtomicBoolean hasInitCompleted = new AtomicBoolean(false);
-	private EncryptedKeyResolver encryptedKeyResolver;
+	private static final BasicParserPool parserPool = new BasicParserPool();
+	private static final EncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver(
+		asList(
+			new InlineEncryptedKeyResolver(),
+			new EncryptedElementTypeEncryptedKeyResolver(),
+			new SimpleRetrievalMethodEncryptedKeyResolver()
+		)
+	);
 
 	OpenSaml2Implementation() {
-		this(new BasicParserPool());
-	}
-
-	OpenSaml2Implementation(BasicParserPool parserPool) {
-		this.parserPool = parserPool;
-		performInit();
-	}
-
-	BasicParserPool getParserPool() {
-		return parserPool;
+		bootstrap();
 	}
 
 	XMLObject resolve(String xml) {
@@ -88,36 +83,29 @@ final class OpenSaml2Implementation {
 	                     PRIVATE METHODS
 	==============================================================
 	 */
-	private void performInit() {
-		if (hasInitCompleted.compareAndSet(false, true)) {
-			java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-			bootstrap();
-		}
-	}
-
-	private void bootstrap() {
+	private static void bootstrap() {
 		//configure default values
 		//maxPoolSize = 5;
-		getParserPool().setMaxPoolSize(50);
+		parserPool.setMaxPoolSize(50);
 		//coalescing = true;
-		getParserPool().setCoalescing(true);
+		parserPool.setCoalescing(true);
 		//expandEntityReferences = false;
-		getParserPool().setExpandEntityReferences(false);
+		parserPool.setExpandEntityReferences(false);
 		//ignoreComments = true;
-		getParserPool().setIgnoreComments(true);
+		parserPool.setIgnoreComments(true);
 		//ignoreElementContentWhitespace = true;
-		getParserPool().setIgnoreElementContentWhitespace(true);
+		parserPool.setIgnoreElementContentWhitespace(true);
 		//namespaceAware = true;
-		getParserPool().setNamespaceAware(true);
+		parserPool.setNamespaceAware(true);
 		//schema = null;
-		getParserPool().setSchema(null);
+		parserPool.setSchema(null);
 		//dtdValidating = false;
-		getParserPool().setDTDValidating(false);
+		parserPool.setDTDValidating(false);
 		//xincludeAware = false;
-		getParserPool().setXincludeAware(false);
+		parserPool.setXincludeAware(false);
 
 		Map<String, Object> builderAttributes = new HashMap<>();
-		getParserPool().setBuilderAttributes(builderAttributes);
+		parserPool.setBuilderAttributes(builderAttributes);
 
 		Map<String, Boolean> parserBuilderFeatures = new HashMap<>();
 		parserBuilderFeatures.put("http://apache.org/xml/features/disallow-doctype-decl", TRUE);
@@ -129,10 +117,10 @@ final class OpenSaml2Implementation {
 		);
 		parserBuilderFeatures.put("http://xml.org/sax/features/external-parameter-entities", FALSE);
 		parserBuilderFeatures.put("http://apache.org/xml/features/dom/defer-node-expansion", FALSE);
-		getParserPool().setBuilderFeatures(parserBuilderFeatures);
+		parserPool.setBuilderFeatures(parserBuilderFeatures);
 
 		try {
-			getParserPool().initialize();
+			parserPool.initialize();
 		} catch (ComponentInitializationException x) {
 			throw new Saml2Exception("Unable to initialize OpenSaml v3 ParserPool", x);
 		}
@@ -153,24 +141,18 @@ final class OpenSaml2Implementation {
 			}
 		}
 
-		registry.setParserPool(getParserPool());
+		registry.setParserPool(parserPool);
 
-		encryptedKeyResolver = new ChainingEncryptedKeyResolver(
-			asList(
-				new InlineEncryptedKeyResolver(),
-				new EncryptedElementTypeEncryptedKeyResolver(),
-				new SimpleRetrievalMethodEncryptedKeyResolver()
-			)
-		);
+
 	}
 
-	private UnmarshallerFactory getUnmarshallerFactory() {
+	private static UnmarshallerFactory getUnmarshallerFactory() {
 		return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 	}
 
-	private XMLObject parse(byte[] xml) {
+	private static XMLObject parse(byte[] xml) {
 		try {
-			Document document = getParserPool().parse(new ByteArrayInputStream(xml));
+			Document document = parserPool.parse(new ByteArrayInputStream(xml));
 			Element element = document.getDocumentElement();
 			return getUnmarshallerFactory().getUnmarshaller(element).unmarshall(element);
 		} catch (UnmarshallingException | XMLParserException e) {

@@ -147,14 +147,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			return subject.getNameID().getValue();
 		}
 		if (subject.getEncryptedID() != null) {
-			for (Saml2X509Credential key : serviceProviderRegistration.getSaml2Credentials()) {
-				try {
-					NameID nameId = decrypt(subject.getEncryptedID());
-					return nameId.getValue();
-				} catch (Saml2Exception e) {
-					logger.debug("Unable to decrypt encrypted NameID for assertion["+assertion.getID()+"]");
-				}
-			}
+			NameID nameId = decrypt(subject.getEncryptedID());
+			return nameId.getValue();
 		}
 		return null;
 	}

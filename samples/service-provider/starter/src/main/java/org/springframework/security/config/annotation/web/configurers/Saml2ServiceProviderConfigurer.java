@@ -50,6 +50,10 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	private List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
+	public Saml2ServiceProviderConfigurer() {
+		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	}
+
 	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
 		this.serviceProvider.entityId(entityId);
 		return this;
