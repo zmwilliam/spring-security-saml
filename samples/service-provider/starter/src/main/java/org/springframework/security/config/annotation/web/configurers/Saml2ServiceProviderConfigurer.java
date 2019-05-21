@@ -34,7 +34,7 @@ import org.springframework.security.saml2.serviceprovider.registration.Saml2Iden
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration.Saml2ServiceProviderRegistrationBuilder;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;

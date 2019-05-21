@@ -20,6 +20,8 @@ package org.springframework.security.saml2.serviceprovider.registration;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
+
 
 /**
  * Configuration object that represents a local(hosted) service provider

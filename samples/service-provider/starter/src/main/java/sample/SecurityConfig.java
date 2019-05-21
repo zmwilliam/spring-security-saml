@@ -28,7 +28,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.Saml2ServiceProviderConfigurer;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;

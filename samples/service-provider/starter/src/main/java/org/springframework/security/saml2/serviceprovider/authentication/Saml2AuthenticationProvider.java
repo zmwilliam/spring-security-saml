@@ -40,7 +40,7 @@ import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2X509Credential;
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
