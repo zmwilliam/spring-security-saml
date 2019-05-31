@@ -17,17 +17,23 @@
 
 package org.springframework.security.saml2.serviceprovider.authentication;
 
+import java.util.Collection;
+
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.AuthenticatedPrincipal;
+import org.springframework.security.core.GrantedAuthority;
 
-public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
+public class Saml2Authentication extends AbstractAuthenticationToken {
 	private final String saml2Response;
-	private final String recipientUrl;
+	private final AuthenticatedPrincipal principal;
 
-	public Saml2AuthenticationToken(String saml2Response,
-									String recipientUrl) {
-		super(null);
+	public Saml2Authentication(String saml2Response,
+							   AuthenticatedPrincipal principal,
+							   Collection<? extends GrantedAuthority> authorities) {
+		super(authorities);
 		this.saml2Response = saml2Response;
-		this.recipientUrl = recipientUrl;
+		this.principal = principal;
+		setAuthenticated(true);
 	}
 
 	@Override
@@ -37,24 +43,11 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 
 	@Override
 	public Object getPrincipal() {
-		return null;
+		return principal;
 	}
 
 	public String getSaml2Response() {
 		return saml2Response;
 	}
 
-	public String getRecipientUrl() {
-		return recipientUrl;
-	}
-
-	@Override
-	public boolean isAuthenticated() {
-		return false;
-	}
-
-	@Override
-	public void setAuthenticated(boolean authenticated) {
-		throw new IllegalArgumentException();
-	}
 }

@@ -28,9 +28,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
-import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderRepository;
+import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -81,11 +81,11 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			Saml2IdentityProviderRepository identityProviderRepository =
+			Saml2IdentityProviderDetailsRepository identityProviderRepository =
 				getSharedObject(
 					builder,
-					Saml2IdentityProviderRepository.class,
-					() -> new DefaultSaml2IdentityProviderRepository(idps),
+					Saml2IdentityProviderDetailsRepository.class,
+					() -> new DefaultSaml2IdentityProviderDetailsRepository(idps),
 					null
 				);
 

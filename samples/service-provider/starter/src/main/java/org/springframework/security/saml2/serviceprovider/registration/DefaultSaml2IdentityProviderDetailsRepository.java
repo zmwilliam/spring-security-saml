@@ -21,11 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DefaultSaml2IdentityProviderRepository implements Saml2IdentityProviderRepository {
+public class DefaultSaml2IdentityProviderDetailsRepository implements Saml2IdentityProviderDetailsRepository {
 
 	private Map<String, Saml2IdentityProviderDetails> idps = new LinkedHashMap<>();
 
-	public DefaultSaml2IdentityProviderRepository(List<Saml2IdentityProviderDetails> idps) {
+	public DefaultSaml2IdentityProviderDetailsRepository(List<Saml2IdentityProviderDetails> idps) {
 		idps.stream().forEach(
 			idp -> this.idps.put(idp.getEntityId(), idp)
 		);

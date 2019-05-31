@@ -38,7 +38,7 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderRepository;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
@@ -89,12 +89,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
 	private final Saml2ServiceProviderRegistration serviceProviderRegistration;
-	private Saml2IdentityProviderRepository identityProviderRepository;
+	private Saml2IdentityProviderDetailsRepository identityProviderRepository;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 	private int responseTimeToleranceMillis = 1000 * 60 * 5; //5 minutes
 
 	public Saml2AuthenticationProvider(Saml2ServiceProviderRegistration serviceProviderRegistration,
-									   Saml2IdentityProviderRepository identityProviderRepository) {
+									   Saml2IdentityProviderDetailsRepository identityProviderRepository) {
 		notNull(serviceProviderRegistration, "serviceProviderRegistration must not be null");
 		notNull(identityProviderRepository, "identityProviderRepository must not be null");
 		this.serviceProviderRegistration = serviceProviderRegistration;
@@ -111,6 +111,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	}
 
 	@Override
+	public boolean supports(Class<?> authentication) {
+		return authentication != null &&
+			Saml2AuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		Saml2AuthenticationToken token = (Saml2AuthenticationToken) authentication;
 		String xml = token.getSaml2Response();
@@ -121,7 +127,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		if (username == null) {
 			throw new UsernameNotFoundException("Assertion ["+assertion.getID()+"] is missing a user identifier");
 		}
-		return new Saml2AuthenticationToken(
+		return new Saml2Authentication(
 			token.getSaml2Response(),
 			() -> username,
 			authoritiesMapper.mapAuthorities(getAssertionAuthorities(assertion))
@@ -130,12 +136,6 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	protected List<? extends GrantedAuthority> getAssertionAuthorities(Assertion assertion) {
 		return singletonList(new SimpleGrantedAuthority("ROLE_USER"));
-	}
-
-	@Override
-	public boolean supports(Class<?> authentication) {
-		return authentication != null &&
-			Saml2AuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
 	private String getUsername(Assertion assertion) {
