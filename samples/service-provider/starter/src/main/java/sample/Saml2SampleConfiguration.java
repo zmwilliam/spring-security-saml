@@ -17,6 +17,9 @@
 
 package sample;
 
+import java.io.CharArrayReader;
+import java.io.IOException;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -33,12 +36,25 @@ import org.springframework.security.saml2.serviceprovider.registration.Saml2Iden
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRepository;
+import org.springframework.util.Assert;
 
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.opensaml.security.x509.X509Support;
+
+import static java.util.Optional.ofNullable;
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.saml2")
 public class Saml2SampleConfiguration {
+	static {
+		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	}
+
 	private Map<String, Object> data;
 
 	@Bean
@@ -51,11 +67,14 @@ public class Saml2SampleConfiguration {
 			String pkey = set.get("private-key");
 			String passphrase = set.get("passphrase");
 			String certificate = set.get("certificate");
-			final PrivateKey pk = Saml2KeyConverters.pkcs8(passphrase).convert(pkey);
+			final PrivateKey pk = getPrivateKey(pkey, passphrase);
 			final X509Certificate cert = getCertificate(certificate);
 			credentials.add(new Saml2X509Credential(pk, cert));
 		}
-		final Saml2ServiceProviderRegistration registration = new Saml2ServiceProviderRegistration(entityId, credentials);
+		final Saml2ServiceProviderRegistration registration = new Saml2ServiceProviderRegistration(
+			ofNullable(entityId).orElse(""),
+			credentials
+		);
 
 		//anonymous implementation of Saml2ServiceProviderRepository
 		return eid -> registration;
@@ -88,6 +107,37 @@ public class Saml2SampleConfiguration {
 		try {
 			return X509Support.decodeCertificate(certificate);
 		} catch (CertificateException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	private PrivateKey getPrivateKey(String key, String passphrase) {
+		final String password = ofNullable(passphrase).orElse("");
+		Assert.hasText(key, "private key cannot be empty");
+		try {
+			PEMParser parser = new PEMParser(new CharArrayReader(key.toCharArray()));
+			Object obj = parser.readObject();
+			parser.close();
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			KeyPair kp;
+			if (obj == null) {
+				throw new IllegalArgumentException("Unable to decode PEM key:" + key);
+			}
+			else if (obj instanceof PEMEncryptedKeyPair) {
+				// Encrypted key - we will use provided password
+				PEMEncryptedKeyPair ckp = (PEMEncryptedKeyPair) obj;
+				PEMDecryptorProvider decProv =
+					new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
+				kp = converter.getKeyPair(ckp.decryptKeyPair(decProv));
+			}
+			else {
+				// Unencrypted key - no password needed
+				PEMKeyPair ukp = (PEMKeyPair) obj;
+				kp = converter.getKeyPair(ukp);
+			}
+
+			return kp.getPrivate();
+		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}

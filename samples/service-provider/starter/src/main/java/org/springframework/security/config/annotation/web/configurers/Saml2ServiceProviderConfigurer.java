@@ -17,8 +17,6 @@
 
 package org.springframework.security.config.annotation.web.configurers;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -26,11 +24,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.header.HeaderWriterFilter;
@@ -42,23 +38,12 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return new Saml2ServiceProviderConfigurer();
 	}
 
-	private String spEntityId = null;
-	private List<Saml2X509Credential> spCredentials = new LinkedList<>();
-	private List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
+	private Saml2ServiceProviderRepository serviceProviderRepository;
+	private Saml2IdentityProviderDetailsRepository identityProviderRepository;
 
 	static  {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-	}
-
-	public Saml2ServiceProviderConfigurer serviceProviderEntityId(String entityId) {
-		this.spEntityId = entityId;
-		return this;
-	}
-
-	public Saml2ServiceProviderConfigurer addServiceProviderCredentials(Saml2X509Credential key) {
-		this.spCredentials.add(key);
-		return this;
 	}
 
 	public Saml2ServiceProviderConfigurer authenticationProvider(AuthenticationProvider provider) {
@@ -66,8 +51,13 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer addIdentityProvider(Saml2IdentityProviderDetails idp) {
-		this.idps.add(idp);
+	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2IdentityProviderDetailsRepository idp) {
+		this.identityProviderRepository = idp;
+		return this;
+	}
+
+	public Saml2ServiceProviderConfigurer serviceProviderRepository(Saml2ServiceProviderRepository sp) {
+		this.serviceProviderRepository = sp;
 		return this;
 	}
 
@@ -80,22 +70,25 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			Saml2IdentityProviderDetailsRepository identityProviderRepository =
+			Saml2IdentityProviderDetailsRepository idp =
 				getSharedObject(
 					builder,
 					Saml2IdentityProviderDetailsRepository.class,
-					() ->
-						entityId -> idps
-							.stream()
-							.filter(idp -> entityId.equals(idp.getEntityId()))
-							.findFirst()
-							.get(),
+					() -> identityProviderRepository,
+					null
+				);
+
+			Saml2ServiceProviderRepository sp =
+				getSharedObject(
+					builder,
+					Saml2ServiceProviderRepository.class,
+					() -> serviceProviderRepository,
 					null
 				);
 
 			authenticationProvider = new Saml2AuthenticationProvider(
-				new Saml2ServiceProviderRegistration(spEntityId, spCredentials),
-				identityProviderRepository
+				sp,
+				idp
 			);
 		}
 
