@@ -66,14 +66,6 @@ final class OpenSaml2Implementation {
 		return resolve(xml.getBytes(StandardCharsets.UTF_8));
 	}
 
-	XMLObject resolve(byte[] xml) {
-		XMLObject parsed = parse(xml);
-		if (parsed != null) {
-			return parsed;
-		}
-		throw new Saml2Exception("Deserialization not supported for given data set");
-	}
-
 	EncryptedKeyResolver getEncryptedKeyResolver() {
 		return encryptedKeyResolver;
 	}
@@ -144,6 +136,14 @@ final class OpenSaml2Implementation {
 		registry.setParserPool(parserPool);
 
 
+	}
+
+	private XMLObject resolve(byte[] xml) {
+		XMLObject parsed = parse(xml);
+		if (parsed != null) {
+			return parsed;
+		}
+		throw new Saml2Exception("Deserialization not supported for given data set");
 	}
 
 	private static UnmarshallerFactory getUnmarshallerFactory() {
