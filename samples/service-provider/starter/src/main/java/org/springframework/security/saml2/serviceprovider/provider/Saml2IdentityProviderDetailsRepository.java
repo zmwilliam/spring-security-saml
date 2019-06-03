@@ -15,10 +15,8 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.registration;
+package org.springframework.security.saml2.serviceprovider.provider;
 
-public interface Saml2ServiceProviderRepository {
-
-	Saml2ServiceProviderRegistration getServiceProvider(String entityId);
-
+public interface Saml2IdentityProviderDetailsRepository {
+	Saml2IdentityProviderDetails getIdentityProvider(String entityId);
 }

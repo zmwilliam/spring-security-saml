@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.registration;
+package org.springframework.security.saml2.serviceprovider.provider;
 
 import java.util.LinkedList;
 import java.util.List;

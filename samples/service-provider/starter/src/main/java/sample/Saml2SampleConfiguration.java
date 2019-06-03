@@ -32,10 +32,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.util.Assert;
 
 import org.bouncycastle.openssl.PEMDecryptorProvider;

@@ -38,10 +38,10 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

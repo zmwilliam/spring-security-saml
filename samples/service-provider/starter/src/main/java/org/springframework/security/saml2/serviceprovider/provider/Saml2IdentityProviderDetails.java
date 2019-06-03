@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.registration;
+package org.springframework.security.saml2.serviceprovider.provider;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
