@@ -36,7 +36,6 @@ public class Saml2ServiceProviderRegistration {
 
 	public Saml2ServiceProviderRegistration(String entityId,
 											List<Saml2X509Credential> credentials) {
-		notNull(entityId, "entityId is required");
 		notEmpty(credentials, "at least one private key and certificate is required for signed and encrypted messages");
 		credentials.stream().forEach(c -> {
 			notNull(c.getPrivateKey(), "private key required in all credentials");

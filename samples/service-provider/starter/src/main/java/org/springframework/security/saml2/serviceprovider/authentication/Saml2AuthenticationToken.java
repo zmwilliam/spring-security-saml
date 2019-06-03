@@ -22,12 +22,15 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 	private final String saml2Response;
 	private final String recipientUrl;
+	private final String derivedServiceProviderEntityId;
 
 	public Saml2AuthenticationToken(String saml2Response,
-									String recipientUrl) {
+									String recipientUrl,
+									String derivedServiceProviderEntityId) {
 		super(null);
 		this.saml2Response = saml2Response;
 		this.recipientUrl = recipientUrl;
+		this.derivedServiceProviderEntityId = derivedServiceProviderEntityId;
 	}
 
 	@Override
@@ -46,6 +49,10 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 
 	public String getRecipientUrl() {
 		return recipientUrl;
+	}
+
+	public String getDerivedServiceProviderEntityId() {
+		return derivedServiceProviderEntityId;
 	}
 
 	@Override

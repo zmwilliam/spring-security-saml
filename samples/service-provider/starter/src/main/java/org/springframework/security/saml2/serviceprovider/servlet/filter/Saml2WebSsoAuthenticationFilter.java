@@ -58,7 +58,8 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		String responseXml = deflateIfRequired(request, b);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
 			responseXml,
-			request.getRequestURL().toString()
+			request.getRequestURL().toString(),
+			getBasePath(request, false)
 		);
 		return getAuthenticationManager().authenticate(authentication);
 	}
@@ -70,6 +71,21 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		else {
 			return new String(b, UTF_8);
 		}
+	}
+
+	private String getBasePath(HttpServletRequest request, boolean includeStandardPorts) {
+		boolean includePort = true;
+		if (443 == request.getServerPort() && "https".equals(request.getScheme())) {
+			includePort = includeStandardPorts;
+		}
+		else if (80 == request.getServerPort() && "http".equals(request.getScheme())) {
+			includePort = includeStandardPorts;
+		}
+		return request.getScheme() +
+			"://" +
+			request.getServerName() +
+			(includePort ? (":" + request.getServerPort()) : "") +
+			request.getContextPath();
 	}
 
 }

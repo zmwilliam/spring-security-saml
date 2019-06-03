@@ -72,7 +72,7 @@ public class Saml2SampleConfiguration {
 			credentials.add(new Saml2X509Credential(pk, cert));
 		}
 		final Saml2ServiceProviderRegistration registration = new Saml2ServiceProviderRegistration(
-			ofNullable(entityId).orElse(""),
+			entityId,
 			credentials
 		);
 

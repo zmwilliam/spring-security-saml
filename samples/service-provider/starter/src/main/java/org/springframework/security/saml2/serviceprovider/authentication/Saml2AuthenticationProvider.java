@@ -123,7 +123,14 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		String xml = token.getSaml2Response();
 		Response samlResponse = getSaml2Response(xml);
 		Saml2ServiceProviderRegistration sp =
-			serviceProviderRepository.getServiceProvider(null);
+			serviceProviderRepository.getServiceProvider(token.getDerivedServiceProviderEntityId());
+		if (!hasText(sp.getEntityId())) {
+			sp = new Saml2ServiceProviderRegistration(
+				token.getDerivedServiceProviderEntityId(),
+				sp.getSaml2Credentials()
+			);
+		}
+
 		Assertion assertion = validateSaml2Response(sp, token.getRecipientUrl(), samlResponse);
 		final String username = getUsername(sp, assertion);
 		if (username == null) {

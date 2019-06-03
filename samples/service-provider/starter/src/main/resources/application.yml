@@ -19,7 +19,7 @@ spring:
   security:
     saml2:
       service-provider:
-        entity-id: http://localhost:8080/sample-sp
+        entity-id: ~
         credentials:
           - private-key: |
               -----BEGIN RSA PRIVATE KEY-----
