@@ -28,7 +28,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
-import org.springframework.security.saml2.serviceprovider.registration.DefaultSaml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.registration.Saml2ServiceProviderRegistration;
@@ -48,7 +47,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	private List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 	private AuthenticationProvider authenticationProvider;
 
-	public Saml2ServiceProviderConfigurer() {
+	static  {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
@@ -85,7 +84,12 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 				getSharedObject(
 					builder,
 					Saml2IdentityProviderDetailsRepository.class,
-					() -> new DefaultSaml2IdentityProviderDetailsRepository(idps),
+					() ->
+						entityId -> idps
+							.stream()
+							.filter(idp -> entityId.equals(idp.getEntityId()))
+							.findFirst()
+							.get(),
 					null
 				);
 
