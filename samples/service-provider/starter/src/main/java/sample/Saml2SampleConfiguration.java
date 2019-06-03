@@ -59,6 +59,15 @@ public class Saml2SampleConfiguration {
 
 	@Bean
 	public Saml2ServiceProviderRepository saml2ServiceProviderRegistrationRepository() {
+		return getServiceProviderRepository();
+	}
+
+	@Bean
+	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
+		return getSaml2IdentityProviderDetailsRepository();
+	}
+
+	private Saml2ServiceProviderRepository getServiceProviderRepository() {
 		String entityId = (String) data.get("entity-id");
 		Map<String,Object> keys = (Map<String, Object>) data.get("credentials");
 		List<Saml2X509Credential> credentials = new LinkedList<>();
@@ -80,8 +89,7 @@ public class Saml2SampleConfiguration {
 		return eid -> registration;
 	}
 
-	@Bean
-	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
+	private Saml2IdentityProviderDetailsRepository getSaml2IdentityProviderDetailsRepository() {
 		final Map<String, Saml2IdentityProviderDetails> idps = new LinkedHashMap<>();
 		Map<String,Object> keys = (Map<String, Object>) data.get("identity-providers");
 		for (Object key : keys.entrySet()) {
