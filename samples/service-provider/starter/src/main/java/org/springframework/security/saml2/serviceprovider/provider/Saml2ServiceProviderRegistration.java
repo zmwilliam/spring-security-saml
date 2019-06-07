@@ -49,7 +49,7 @@ public class Saml2ServiceProviderRegistration {
 		this.identityProviders.addAll(identityProviders);
 	}
 
-	public List<Saml2X509Credential> getSaml2Credentials() {
+	public List<Saml2X509Credential> getCredentials() {
 		return credentials;
 	}
 

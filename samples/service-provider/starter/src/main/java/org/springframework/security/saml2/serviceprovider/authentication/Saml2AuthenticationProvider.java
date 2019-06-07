@@ -293,7 +293,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private Assertion decrypt(Saml2ServiceProviderRegistration sp, EncryptedAssertion assertion) {
 		Saml2Exception last = null;
-		for (Saml2X509Credential key : sp.getSaml2Credentials()) {
+		for (Saml2X509Credential key : sp.getCredentials()) {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return decrypter.decrypt(assertion);
@@ -306,7 +306,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private NameID decrypt(Saml2ServiceProviderRegistration sp, EncryptedID assertion) {
 		Saml2Exception last = null;
-		for (Saml2X509Credential key : sp.getSaml2Credentials()) {
+		for (Saml2X509Credential key : sp.getCredentials()) {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return (NameID) decrypter.decrypt(assertion);
