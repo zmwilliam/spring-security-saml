@@ -23,7 +23,6 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.util.Assert;
@@ -62,11 +60,6 @@ public class Saml2SampleConfiguration {
 		return getServiceProviderRepository();
 	}
 
-	@Bean
-	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
-		return getSaml2IdentityProviderDetailsRepository();
-	}
-
 	private Saml2ServiceProviderRepository getServiceProviderRepository() {
 		String entityId = (String) data.get("entity-id");
 		Map<String,Object> keys = (Map<String, Object>) data.get("credentials");
@@ -82,15 +75,16 @@ public class Saml2SampleConfiguration {
 		}
 		final Saml2ServiceProviderRegistration registration = new Saml2ServiceProviderRegistration(
 			entityId,
-			credentials
+			credentials,
+			getSaml2IdentityProviderDetails()
 		);
 
 		//anonymous implementation of Saml2ServiceProviderRepository
 		return eid -> registration;
 	}
 
-	private Saml2IdentityProviderDetailsRepository getSaml2IdentityProviderDetailsRepository() {
-		final Map<String, Saml2IdentityProviderDetails> idps = new LinkedHashMap<>();
+	private List<Saml2IdentityProviderDetails> getSaml2IdentityProviderDetails() {
+		final List<Saml2IdentityProviderDetails> idps = new LinkedList<>();
 		Map<String,Object> keys = (Map<String, Object>) data.get("identity-providers");
 		for (Object key : keys.entrySet()) {
 			List<X509Certificate> certificates = new LinkedList<>();
@@ -101,9 +95,9 @@ public class Saml2SampleConfiguration {
 				String c = (String)((Map.Entry)cert).getValue();
 				certificates.add(getCertificate(c));
 			}
-			idps.put(entityId, new Saml2IdentityProviderDetails(entityId, certificates));
+			idps.add(new Saml2IdentityProviderDetails(entityId, certificates));
 		}
-		return entityId -> idps.get(entityId);
+		return idps;
 	}
 
 

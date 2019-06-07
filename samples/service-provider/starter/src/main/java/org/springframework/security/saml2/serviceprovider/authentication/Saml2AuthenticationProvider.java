@@ -39,7 +39,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 
@@ -90,16 +89,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
 	private final Saml2ServiceProviderRepository serviceProviderRepository;
-	private Saml2IdentityProviderDetailsRepository identityProviderRepository;
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 	private int responseTimeToleranceMillis = 1000 * 60 * 5; //5 minutes
 
-	public Saml2AuthenticationProvider(Saml2ServiceProviderRepository serviceProviderRepository,
-									   Saml2IdentityProviderDetailsRepository identityProviderRepository) {
+	public Saml2AuthenticationProvider(Saml2ServiceProviderRepository serviceProviderRepository) {
 		notNull(serviceProviderRepository, "serviceProviderRepository must not be null");
-		notNull(identityProviderRepository, "identityProviderRepository must not be null");
 		this.serviceProviderRepository = serviceProviderRepository;
-		this.identityProviderRepository = identityProviderRepository;
 	}
 
 	public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
@@ -127,7 +122,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		if (!hasText(sp.getEntityId())) {
 			sp = new Saml2ServiceProviderRegistration(
 				token.getDerivedServiceProviderEntityId(),
-				sp.getSaml2Credentials()
+				sp.getSaml2Credentials(),
+				sp.getIdentityProviders()
 			);
 		}
 
@@ -174,7 +170,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 		final String issuer = samlResponse.getIssuer().getValue();
 		logger.debug("Processing SAML response from "+issuer);
-		final Saml2IdentityProviderDetails idp = identityProviderRepository.getIdentityProvider(issuer);
+		final Saml2IdentityProviderDetails idp = sp.getIdentityProvider(issuer);
 		if (idp == null) {
 			throw new ProviderNotFoundException(format("SAML 2 Provider for %s was not found.", issuer));
 		}

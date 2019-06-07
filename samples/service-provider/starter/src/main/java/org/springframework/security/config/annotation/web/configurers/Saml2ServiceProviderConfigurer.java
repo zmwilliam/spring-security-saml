@@ -25,7 +25,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -40,7 +39,6 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 
 	private AuthenticationProvider authenticationProvider;
 	private Saml2ServiceProviderRepository serviceProviderRepository;
-	private Saml2IdentityProviderDetailsRepository identityProviderRepository;
 
 	static  {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -48,11 +46,6 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 
 	public Saml2ServiceProviderConfigurer authenticationProvider(AuthenticationProvider provider) {
 		this.authenticationProvider = provider;
-		return this;
-	}
-
-	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2IdentityProviderDetailsRepository idp) {
-		this.identityProviderRepository = idp;
 		return this;
 	}
 
@@ -70,14 +63,6 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			Saml2IdentityProviderDetailsRepository idp =
-				getSharedObject(
-					builder,
-					Saml2IdentityProviderDetailsRepository.class,
-					() -> identityProviderRepository,
-					null
-				);
-
 			Saml2ServiceProviderRepository sp =
 				getSharedObject(
 					builder,
@@ -86,10 +71,7 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 					null
 				);
 
-			authenticationProvider = new Saml2AuthenticationProvider(
-				sp,
-				idp
-			);
+			authenticationProvider = new Saml2AuthenticationProvider(sp);
 		}
 
 		builder.authenticationProvider(postProcess(authenticationProvider));

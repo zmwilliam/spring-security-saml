@@ -32,7 +32,7 @@ public class Saml2IdentityProviderDetails {
 	private final List<X509Certificate> verificationCredentials;
 
 	public Saml2IdentityProviderDetails(String entityId,
-										 List<X509Certificate> verificationCredentials) {
+										List<X509Certificate> verificationCredentials) {
 		notNull(entityId, "entityId is required");
 		notEmpty(verificationCredentials, "verification credentials are required");
 		verificationCredentials.stream().forEach(c -> notNull(c, "verification credentials cannot be null"));
