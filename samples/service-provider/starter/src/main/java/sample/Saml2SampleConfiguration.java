@@ -80,7 +80,11 @@ public class Saml2SampleConfiguration {
 		);
 
 		//anonymous implementation of Saml2ServiceProviderRepository
-		return eid -> registration;
+		return eid -> new Saml2ServiceProviderRegistration(
+			ofNullable(registration.getEntityId()).orElse(eid),
+			registration.getSaml2Credentials(),
+			registration.getIdentityProviders()
+		);
 	}
 
 	private List<Saml2IdentityProviderDetails> getSaml2IdentityProviderDetails() {
