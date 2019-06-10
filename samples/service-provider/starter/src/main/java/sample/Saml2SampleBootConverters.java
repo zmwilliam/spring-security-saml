@@ -17,30 +17,15 @@
 
 package sample;
 
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.opensaml.security.x509.X509Support;
-import sample.Saml2SampleBootConfiguration.StringX509Credential;
-
-import static java.util.Optional.ofNullable;
 
 @Configuration
 public class Saml2SampleBootConverters {
@@ -53,51 +38,6 @@ public class Saml2SampleBootConverters {
 			try {
 				return X509Support.decodeCertificate(source);
 			} catch (CertificateException e) {
-				throw new IllegalArgumentException(e);
-			}
-		}
-	}
-
-	@Component
-	@ConfigurationPropertiesBinding
-	public static class Saml2X509CredentialConverter implements Converter<StringX509Credential, Saml2X509Credential> {
-		@Override
-		public Saml2X509Credential convert(StringX509Credential source) {
-			final PrivateKey privateKey = getPrivateKey(
-				source.getPrivateKey(),
-				source.getPassphrase()
-			);
-			final X509Certificate certificate = new X509CertificateConverter().convert(source.getCertificate());
-			return new Saml2X509Credential(privateKey, certificate);
-		}
-
-		private PrivateKey getPrivateKey(String key, String passphrase) {
-			final String password = ofNullable(passphrase).orElse("");
-			Assert.hasText(key, "private key cannot be empty");
-			try {
-				PEMParser parser = new PEMParser(new CharArrayReader(key.toCharArray()));
-				Object obj = parser.readObject();
-				parser.close();
-				JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-				KeyPair kp;
-				if (obj == null) {
-					throw new IllegalArgumentException("Unable to decode PEM key:" + key);
-				}
-				else if (obj instanceof PEMEncryptedKeyPair) {
-					// Encrypted key - we will use provided password
-					PEMEncryptedKeyPair ckp = (PEMEncryptedKeyPair) obj;
-					PEMDecryptorProvider decProv =
-						new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
-					kp = converter.getKeyPair(ckp.decryptKeyPair(decProv));
-				}
-				else {
-					// Unencrypted key - no password needed
-					PEMKeyPair ukp = (PEMKeyPair) obj;
-					kp = converter.getKeyPair(ukp);
-				}
-
-				return kp.getPrivate();
-			} catch (IOException e) {
 				throw new IllegalArgumentException(e);
 			}
 		}

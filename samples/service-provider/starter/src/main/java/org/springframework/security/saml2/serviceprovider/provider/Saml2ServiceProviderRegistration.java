@@ -31,9 +31,12 @@ import static org.springframework.util.Assert.notNull;
  */
 public class Saml2ServiceProviderRegistration {
 
-	private final String entityId;
-	private final List<Saml2X509Credential> credentials = new LinkedList<>();
-	private final List<Saml2IdentityProviderDetails> identityProviders = new LinkedList<>();
+	private String entityId;
+	private List<Saml2X509Credential> credentials = new LinkedList<>();
+	private List<Saml2IdentityProviderDetails> identityProviders = new LinkedList<>();
+
+	public Saml2ServiceProviderRegistration() {
+	}
 
 	public Saml2ServiceProviderRegistration(String entityId,
 											List<Saml2X509Credential> credentials,
@@ -68,4 +71,18 @@ public class Saml2ServiceProviderRegistration {
 		return identityProviders;
 	}
 
+	public Saml2ServiceProviderRegistration setEntityId(String entityId) {
+		this.entityId = entityId;
+		return this;
+	}
+
+	public Saml2ServiceProviderRegistration setCredentials(List<Saml2X509Credential> credentials) {
+		this.credentials = credentials;
+		return this;
+	}
+
+	public Saml2ServiceProviderRegistration setIdentityProviders(List<Saml2IdentityProviderDetails> identityProviders) {
+		this.identityProviders = identityProviders;
+		return this;
+	}
 }

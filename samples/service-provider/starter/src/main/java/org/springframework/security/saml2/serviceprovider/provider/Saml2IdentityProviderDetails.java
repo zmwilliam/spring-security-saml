@@ -28,8 +28,11 @@ import static org.springframework.util.Assert.notNull;
  */
 public class Saml2IdentityProviderDetails {
 
-	private final String entityId;
-	private final List<X509Certificate> verificationCredentials;
+	private String entityId;
+	private List<X509Certificate> verificationCredentials;
+
+	public Saml2IdentityProviderDetails() {
+	}
 
 	public Saml2IdentityProviderDetails(String entityId,
 										List<X509Certificate> verificationCredentials) {
