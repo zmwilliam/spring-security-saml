@@ -15,7 +15,7 @@
  *
  */
 
-package sample;
+package boot.saml2.config;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -29,7 +29,7 @@ import org.springframework.security.saml2.serviceprovider.provider.Saml2Identity
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 
-import sample.Saml2SampleBootConverters.Saml2X509CredentialConverter;
+import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;

@@ -15,7 +15,7 @@
  *
  */
 
-package sample;
+package boot.saml2.config;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.opensaml.security.x509.X509Support;
-import sample.Saml2SampleBootConfiguration.StringX509Credential;
+import boot.saml2.config.Saml2SampleBootConfiguration.StringX509Credential;
 
 import static java.util.Optional.ofNullable;
 

@@ -40,6 +40,7 @@ spring:
               Afv9BFV943Yp3nHwPC7nYC4FvMxOn4qW4KrHRJl57zcY6VDL4J030CfmvLjqUbuT
               LYiQp/YgFlmoE4bcGuCiaRfUJZCwooPK2dQMoIvMZeVl9ExUGdXVMg==
               -----END RSA PRIVATE KEY-----
+            passphrase: sppassword
             certificate: |
               MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC
               VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG
@@ -55,7 +56,6 @@ spring:
               XOfI2Z9eukwrSknDwq/zscR0YxwwqDBMt/QdAODfSwAfnciiYLkmEjlozWRtOeN+
               qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD
               RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B
-            passphrase: sppassword
         identity-providers:
           - entity-id: http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php
             certificates:
