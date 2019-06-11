@@ -21,10 +21,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
 import boot.saml2.config.Saml2SampleBootConfiguration;
-import boot.saml2.config.Saml2SampleBootConverters;
 
 @SpringBootApplication
-@Import({ Saml2SampleBootConfiguration.class, Saml2SampleBootConverters.class })
+@Import({ Saml2SampleBootConfiguration.class })
 public class Saml2ServiceProviderStarterApplication {
 
 	public static void main(String[] args) {

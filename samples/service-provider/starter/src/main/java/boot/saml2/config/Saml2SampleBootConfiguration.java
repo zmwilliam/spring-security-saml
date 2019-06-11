@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
@@ -36,6 +37,7 @@ import static java.util.Optional.ofNullable;
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.saml2")
+@Import(Saml2SampleBootConverters.class)
 public class Saml2SampleBootConfiguration {
 
 	static {
