@@ -20,11 +20,19 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
+		classpath("io.spring.javaformat:spring-javaformat-gradle-plugin:0.0.12")
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 	}
 }
 
+apply plugin: 'io.spring.javaformat'
 apply plugin: "org.springframework.boot"
+apply plugin: 'checkstyle'
+
+checkstyle {
+	toolVersion = "8.18"
+}
+
 
 dependencies {
 
@@ -79,7 +87,8 @@ dependencies {
 	}
 	testCompile "org.springframework.security:spring-security-test:$springSecurityVersion"
 
-
+	//--- Java Checkstyle
+	checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.12")
 
 
 }

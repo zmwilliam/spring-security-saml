@@ -32,7 +32,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.zip.Deflater.DEFLATED;
 
 final class Saml2EncodingUtils {
-	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[]{'\n'});
+
+	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[] { '\n' });
 
 	static String encode(byte[] b) {
 		return UNCHUNKED_ENCODER.encodeToString(b);
@@ -49,7 +50,8 @@ final class Saml2EncodingUtils {
 			deflater.write(s.getBytes(UTF_8));
 			deflater.finish();
 			return b.toByteArray();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new Saml2Exception("Unable to deflate string", e);
 		}
 	}
@@ -61,7 +63,8 @@ final class Saml2EncodingUtils {
 			iout.write(b);
 			iout.finish();
 			return new String(out.toByteArray(), UTF_8);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new Saml2Exception("Unable to inflate string", e);
 		}
 	}

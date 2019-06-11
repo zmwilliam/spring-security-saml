@@ -42,9 +42,8 @@ public class Saml2AuthenticationFailureHandler implements AuthenticationFailureH
 	}
 
 	@Override
-	public void onAuthenticationFailure(HttpServletRequest request,
-										HttpServletResponse response,
-										AuthenticationException exception) throws IOException, ServletException {
+	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException exception) throws IOException, ServletException {
 		logger.debug("Processing SAML2 Authentication Exception", exception);
 		sendHtmlBody(response, errorHtml(Collections.singletonList(exception.getMessage())));
 	}
@@ -57,20 +56,12 @@ public class Saml2AuthenticationFailureHandler implements AuthenticationFailureH
 	}
 
 	private String errorHtml(List<String> messages) {
-		return (
-			"<!DOCTYPE html>\n" +
-				"<html>\n" +
-				"<head>\n" +
-				"    <meta charset=\"utf-8\" />\n" +
-				"</head>\n" +
-				"<body>\n" +
-				"    <p>\n" +
-				"        <strong>Error:</strong> A SAML error occurred<br/><br/>\n" +
-				messages.stream().reduce((s1, s2) -> HtmlUtils.htmlEscape(s1) + "<br/>" + HtmlUtils.htmlEscape(s2)) +
-				"    </p>\n" +
-				"</body>\n" +
-				"</html>"
+		return ("<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "    <meta charset=\"utf-8\" />\n" + "</head>\n"
+				+ "<body>\n" + "    <p>\n" + "        <strong>Error:</strong> A SAML error occurred<br/><br/>\n"
+				+ messages.stream().reduce((s1, s2) -> HtmlUtils.htmlEscape(s1) + "<br/>" + HtmlUtils.htmlEscape(s2))
+				+ "    </p>\n" + "</body>\n" + "</html>"
 
 		);
 	}
+
 }

@@ -41,14 +41,12 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 
 	@Override
 	protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
-		return (super.requiresAuthentication(request, response) &&
-			hasText(request.getParameter("SAMLResponse")));
+		return (super.requiresAuthentication(request, response) && hasText(request.getParameter("SAMLResponse")));
 	}
-
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-		throws AuthenticationException {
+			throws AuthenticationException {
 		if (!requiresAuthentication(request, response)) {
 			throw new PreAuthenticatedCredentialsNotFoundException("Missing SAML2 response data");
 		}
@@ -56,11 +54,8 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
-		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
-			responseXml,
-			request.getRequestURL().toString(),
-			getBasePath(request, false)
-		);
+		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(responseXml,
+				request.getRequestURL().toString(), getBasePath(request, false));
 		return getAuthenticationManager().authenticate(authentication);
 	}
 
@@ -81,11 +76,8 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		else if (80 == request.getServerPort() && "http".equals(request.getScheme())) {
 			includePort = includeStandardPorts;
 		}
-		return request.getScheme() +
-			"://" +
-			request.getServerName() +
-			(includePort ? (":" + request.getServerPort()) : "") +
-			request.getContextPath();
+		return request.getScheme() + "://" + request.getServerName()
+				+ (includePort ? (":" + request.getServerPort()) : "") + request.getContextPath();
 	}
 
 }

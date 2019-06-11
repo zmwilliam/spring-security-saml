@@ -85,6 +85,7 @@ import static sample.samples.Saml2TestUtils.encryptNameId;
 public class ServiceProviderSampleTests {
 
 	public static final String LOCAL_SP_ENTITY_ID = "http://localhost:8080/sample-sp";
+
 	@Autowired
 	MockMvc mockMvc;
 
@@ -92,6 +93,7 @@ public class ServiceProviderSampleTests {
 	@EnableAutoConfiguration
 	@ComponentScan(basePackages = "sample")
 	public static class SpringBootApplicationTestConfig {
+
 	}
 
 	@BeforeAll
@@ -107,15 +109,11 @@ public class ServiceProviderSampleTests {
 		Response response = buildResponse(assertion);
 		signXmlObject(response, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
+		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated().withUsername(username));
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
+				.andExpect(authenticated().withUsername(username));
 	}
 
 	@Test
@@ -126,18 +124,13 @@ public class ServiceProviderSampleTests {
 		Response response = buildResponse(assertion);
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		final ResultActions actions = mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated().withUsername(username));
+		final ResultActions actions = mockMvc
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
+				.andExpect(authenticated().withUsername(username));
 	}
-
-
 
 	@Test
 	@DisplayName("unsigned response")
@@ -145,15 +138,11 @@ public class ServiceProviderSampleTests {
 		Assertion assertion = buildAssertion("testuser@spring.security.saml");
 		Response response = buildResponse(assertion);
 		String xml = toXml(response);
-		mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
+		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is4xxClientError())
-			.andExpect(unauthenticated())
-			.andExpect(content().string(containsString("Unable to find a valid assertion")));
+				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is4xxClientError()).andExpect(unauthenticated())
+				.andExpect(content().string(containsString("Unable to find a valid assertion")));
 	}
 
 	@Test
@@ -161,22 +150,17 @@ public class ServiceProviderSampleTests {
 	void signedResponseEncryptedAssertion() throws Exception {
 		final String username = "testuser@spring.security.saml";
 		Assertion assertion = buildAssertion(username);
-		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(
-			assertion,
-			X509Support.decodeCertificate(spCertificate)
-		);
+		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(assertion,
+				X509Support.decodeCertificate(spCertificate));
 		Response response = buildResponse(encryptedAssertion);
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		final ResultActions actions = mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated().withUsername(username));
+		final ResultActions actions = mockMvc
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
+				.andExpect(authenticated().withUsername(username));
 	}
 
 	@Test
@@ -184,21 +168,16 @@ public class ServiceProviderSampleTests {
 	void unsignedResponseEncryptedAssertion() throws Exception {
 		final String username = "testuser@spring.security.saml";
 		Assertion assertion = buildAssertion(username);
-		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(
-			assertion,
-			X509Support.decodeCertificate(spCertificate)
-		);
+		EncryptedAssertion encryptedAssertion = Saml2TestUtils.encryptAssertion(assertion,
+				X509Support.decodeCertificate(spCertificate));
 		Response response = buildResponse(encryptedAssertion);
 		String xml = toXml(response);
-		final ResultActions actions = mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated().withUsername(username));
+		final ResultActions actions = mockMvc
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
+				.andExpect(authenticated().withUsername(username));
 	}
 
 	@Test
@@ -206,22 +185,19 @@ public class ServiceProviderSampleTests {
 	void signedResponseEncryptedNameId() throws Exception {
 		final String username = "testuser@spring.security.saml";
 		Assertion assertion = buildAssertion(username);
-		final EncryptedID nameId =
-			encryptNameId(assertion.getSubject().getNameID(), X509Support.decodeCertificate(spCertificate));
+		final EncryptedID nameId = encryptNameId(assertion.getSubject().getNameID(),
+				X509Support.decodeCertificate(spCertificate));
 		assertion.getSubject().setEncryptedID(nameId);
 		assertion.getSubject().setNameID(null);
 		Response response = buildResponse(assertion);
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		final ResultActions actions = mockMvc.perform(
-			post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost")
-				.contextPath("/sample-sp")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8)))
-		)
-			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("/sample-sp/"))
-			.andExpect(authenticated().withUsername(username));
+		final ResultActions actions = mockMvc
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
+				.andExpect(authenticated().withUsername(username));
 	}
 
 	private Response buildResponse(Assertion assertion) {
@@ -253,7 +229,8 @@ public class ServiceProviderSampleTests {
 
 		SubjectConfirmation subjectConfirmation = buildSubjectConfirmation();
 
-		// Default to bearer with basic valid confirmation data, but the test can change as appropriate
+		// Default to bearer with basic valid confirmation data, but the test can change
+		// as appropriate
 		subjectConfirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
 		final SubjectConfirmationData confirmationData = buildSubjectConfirmationData(LOCAL_SP_ENTITY_ID);
 		confirmationData.setRecipient("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
@@ -262,8 +239,8 @@ public class ServiceProviderSampleTests {
 		return assertion;
 	}
 
-	protected Credential getSigningCredential(String certificate, String key, UsageType usageType) throws CertificateException,
-																										  KeyException {
+	protected Credential getSigningCredential(String certificate, String key, UsageType usageType)
+			throws CertificateException, KeyException {
 		PublicKey publicKey = X509Support.decodeCertificate(certificate.getBytes(UTF_8)).getPublicKey();
 		final PrivateKey privateKey = KeySupport.decodePrivateKey(key.getBytes(UTF_8), new char[0]);
 		BasicCredential cred = CredentialSupport.getSimpleCredential(publicKey, privateKey);
@@ -273,7 +250,7 @@ public class ServiceProviderSampleTests {
 	}
 
 	private void signXmlObject(SignableSAMLObject object, Credential credential)
-		throws MarshallingException, SecurityException, SignatureException {
+			throws MarshallingException, SecurityException, SignatureException {
 		SignatureSigningParameters parameters = new SignatureSigningParameters();
 		parameters.setSigningCredential(credential);
 		parameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
@@ -284,79 +261,74 @@ public class ServiceProviderSampleTests {
 
 	private String toXml(XMLObject object) throws MarshallingException {
 		final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-		Element element = marshallerFactory
-			.getMarshaller(object)
-			.marshall(object);
+		Element element = marshallerFactory.getMarshaller(object).marshall(object);
 		return SerializeSupport.nodeToString(element);
 	}
 
+	private String idpCertificate = "-----BEGIN CERTIFICATE-----\n"
+			+ "MIIEEzCCAvugAwIBAgIJAIc1qzLrv+5nMA0GCSqGSIb3DQEBCwUAMIGfMQswCQYD\n"
+			+ "VQQGEwJVUzELMAkGA1UECAwCQ08xFDASBgNVBAcMC0Nhc3RsZSBSb2NrMRwwGgYD\n"
+			+ "VQQKDBNTYW1sIFRlc3RpbmcgU2VydmVyMQswCQYDVQQLDAJJVDEgMB4GA1UEAwwX\n"
+			+ "c2ltcGxlc2FtbHBocC5jZmFwcHMuaW8xIDAeBgkqhkiG9w0BCQEWEWZoYW5pa0Bw\n"
+			+ "aXZvdGFsLmlvMB4XDTE1MDIyMzIyNDUwM1oXDTI1MDIyMjIyNDUwM1owgZ8xCzAJ\n"
+			+ "BgNVBAYTAlVTMQswCQYDVQQIDAJDTzEUMBIGA1UEBwwLQ2FzdGxlIFJvY2sxHDAa\n"
+			+ "BgNVBAoME1NhbWwgVGVzdGluZyBTZXJ2ZXIxCzAJBgNVBAsMAklUMSAwHgYDVQQD\n"
+			+ "DBdzaW1wbGVzYW1scGhwLmNmYXBwcy5pbzEgMB4GCSqGSIb3DQEJARYRZmhhbmlr\n"
+			+ "QHBpdm90YWwuaW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC4cn62\n"
+			+ "E1xLqpN34PmbrKBbkOXFjzWgJ9b+pXuaRft6A339uuIQeoeH5qeSKRVTl32L0gdz\n"
+			+ "2ZivLwZXW+cqvftVW1tvEHvzJFyxeTW3fCUeCQsebLnA2qRa07RkxTo6Nf244mWW\n"
+			+ "RDodcoHEfDUSbxfTZ6IExSojSIU2RnD6WllYWFdD1GFpBJOmQB8rAc8wJIBdHFdQ\n"
+			+ "nX8Ttl7hZ6rtgqEYMzYVMuJ2F2r1HSU1zSAvwpdYP6rRGFRJEfdA9mm3WKfNLSc5\n"
+			+ "cljz0X/TXy0vVlAV95l9qcfFzPmrkNIst9FZSwpvB49LyAVke04FQPPwLgVH4gph\n"
+			+ "iJH3jvZ7I+J5lS8VAgMBAAGjUDBOMB0GA1UdDgQWBBTTyP6Cc5HlBJ5+ucVCwGc5\n"
+			+ "ogKNGzAfBgNVHSMEGDAWgBTTyP6Cc5HlBJ5+ucVCwGc5ogKNGzAMBgNVHRMEBTAD\n"
+			+ "AQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAvMS4EQeP/ipV4jOG5lO6/tYCb/iJeAduO\n"
+			+ "nRhkJk0DbX329lDLZhTTL/x/w/9muCVcvLrzEp6PN+VWfw5E5FWtZN0yhGtP9R+v\n"
+			+ "ZnrV+oc2zGD+no1/ySFOe3EiJCO5dehxKjYEmBRv5sU/LZFKZpozKN/BMEa6CqLu\n"
+			+ "xbzb7ykxVr7EVFXwltPxzE9TmL9OACNNyF5eJHWMRMllarUvkcXlh4pux4ks9e6z\n"
+			+ "V9DQBy2zds9f1I3qxg0eX6JnGrXi/ZiCT+lJgVe3ZFXiejiLAiKB04sXW3ti0LW3\n"
+			+ "lx13Y1YlQ4/tlpgTgfIJxKV6nyPiLoK0nywbMd+vpAirDt2Oc+hk\n" + "-----END CERTIFICATE-----\n";
 
-	private String idpCertificate = "-----BEGIN CERTIFICATE-----\n" +
-		"MIIEEzCCAvugAwIBAgIJAIc1qzLrv+5nMA0GCSqGSIb3DQEBCwUAMIGfMQswCQYD\n" +
-		"VQQGEwJVUzELMAkGA1UECAwCQ08xFDASBgNVBAcMC0Nhc3RsZSBSb2NrMRwwGgYD\n" +
-		"VQQKDBNTYW1sIFRlc3RpbmcgU2VydmVyMQswCQYDVQQLDAJJVDEgMB4GA1UEAwwX\n" +
-		"c2ltcGxlc2FtbHBocC5jZmFwcHMuaW8xIDAeBgkqhkiG9w0BCQEWEWZoYW5pa0Bw\n" +
-		"aXZvdGFsLmlvMB4XDTE1MDIyMzIyNDUwM1oXDTI1MDIyMjIyNDUwM1owgZ8xCzAJ\n" +
-		"BgNVBAYTAlVTMQswCQYDVQQIDAJDTzEUMBIGA1UEBwwLQ2FzdGxlIFJvY2sxHDAa\n" +
-		"BgNVBAoME1NhbWwgVGVzdGluZyBTZXJ2ZXIxCzAJBgNVBAsMAklUMSAwHgYDVQQD\n" +
-		"DBdzaW1wbGVzYW1scGhwLmNmYXBwcy5pbzEgMB4GCSqGSIb3DQEJARYRZmhhbmlr\n" +
-		"QHBpdm90YWwuaW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC4cn62\n" +
-		"E1xLqpN34PmbrKBbkOXFjzWgJ9b+pXuaRft6A339uuIQeoeH5qeSKRVTl32L0gdz\n" +
-		"2ZivLwZXW+cqvftVW1tvEHvzJFyxeTW3fCUeCQsebLnA2qRa07RkxTo6Nf244mWW\n" +
-		"RDodcoHEfDUSbxfTZ6IExSojSIU2RnD6WllYWFdD1GFpBJOmQB8rAc8wJIBdHFdQ\n" +
-		"nX8Ttl7hZ6rtgqEYMzYVMuJ2F2r1HSU1zSAvwpdYP6rRGFRJEfdA9mm3WKfNLSc5\n" +
-		"cljz0X/TXy0vVlAV95l9qcfFzPmrkNIst9FZSwpvB49LyAVke04FQPPwLgVH4gph\n" +
-		"iJH3jvZ7I+J5lS8VAgMBAAGjUDBOMB0GA1UdDgQWBBTTyP6Cc5HlBJ5+ucVCwGc5\n" +
-		"ogKNGzAfBgNVHSMEGDAWgBTTyP6Cc5HlBJ5+ucVCwGc5ogKNGzAMBgNVHRMEBTAD\n" +
-		"AQH/MA0GCSqGSIb3DQEBCwUAA4IBAQAvMS4EQeP/ipV4jOG5lO6/tYCb/iJeAduO\n" +
-		"nRhkJk0DbX329lDLZhTTL/x/w/9muCVcvLrzEp6PN+VWfw5E5FWtZN0yhGtP9R+v\n" +
-		"ZnrV+oc2zGD+no1/ySFOe3EiJCO5dehxKjYEmBRv5sU/LZFKZpozKN/BMEa6CqLu\n" +
-		"xbzb7ykxVr7EVFXwltPxzE9TmL9OACNNyF5eJHWMRMllarUvkcXlh4pux4ks9e6z\n" +
-		"V9DQBy2zds9f1I3qxg0eX6JnGrXi/ZiCT+lJgVe3ZFXiejiLAiKB04sXW3ti0LW3\n" +
-		"lx13Y1YlQ4/tlpgTgfIJxKV6nyPiLoK0nywbMd+vpAirDt2Oc+hk\n" +
-		"-----END CERTIFICATE-----\n";
+	private String idpPrivateKey = "-----BEGIN PRIVATE KEY-----\n"
+			+ "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4cn62E1xLqpN3\n"
+			+ "4PmbrKBbkOXFjzWgJ9b+pXuaRft6A339uuIQeoeH5qeSKRVTl32L0gdz2ZivLwZX\n"
+			+ "W+cqvftVW1tvEHvzJFyxeTW3fCUeCQsebLnA2qRa07RkxTo6Nf244mWWRDodcoHE\n"
+			+ "fDUSbxfTZ6IExSojSIU2RnD6WllYWFdD1GFpBJOmQB8rAc8wJIBdHFdQnX8Ttl7h\n"
+			+ "Z6rtgqEYMzYVMuJ2F2r1HSU1zSAvwpdYP6rRGFRJEfdA9mm3WKfNLSc5cljz0X/T\n"
+			+ "Xy0vVlAV95l9qcfFzPmrkNIst9FZSwpvB49LyAVke04FQPPwLgVH4gphiJH3jvZ7\n"
+			+ "I+J5lS8VAgMBAAECggEBAKyxBlIS7mcp3chvq0RF7B3PHFJMMzkwE+t3pLJcs4cZ\n"
+			+ "nezh/KbREfP70QjXzk/llnZCvxeIs5vRu24vbdBm79qLHqBuHp8XfHHtuo2AfoAQ\n"
+			+ "l4h047Xc/+TKMivnPQ0jX9qqndKDLqZDf5wnbslDmlskvF0a/MjsLU0TxtOfo+dB\n"
+			+ "t55FW11cGqxZwhS5Gnr+cbw3OkHz23b9gEOt9qfwPVepeysbmm9FjU+k4yVa7rAN\n"
+			+ "xcbzVb6Y7GCITe2tgvvEHmjB9BLmWrH3mZ3Af17YU/iN6TrpPd6Sj3QoS+2wGtAe\n"
+			+ "HbUs3CKJu7bIHcj4poal6Kh8519S+erJTtqQ8M0ZiEECgYEA43hLYAPaUueFkdfh\n"
+			+ "9K/7ClH6436CUH3VdizwUXi26fdhhV/I/ot6zLfU2mgEHU22LBECWQGtAFm8kv0P\n"
+			+ "zPn+qjaR3e62l5PIlSYbnkIidzoDZ2ztu4jF5LgStlTJQPteFEGgZVl5o9DaSZOq\n"
+			+ "Yd7G3XqXuQ1VGMW58G5FYJPtA1cCgYEAz5TPUtK+R2KXHMjUwlGY9AefQYRYmyX2\n"
+			+ "Tn/OFgKvY8lpAkMrhPKONq7SMYc8E9v9G7A0dIOXvW7QOYSapNhKU+np3lUafR5F\n"
+			+ "4ZN0bxZ9qjHbn3AMYeraKjeutHvlLtbHdIc1j3sxe/EzltRsYmiqLdEBW0p6hwWg\n"
+			+ "tyGhYWVyaXMCgYAfDOKtHpmEy5nOCLwNXKBWDk7DExfSyPqEgSnk1SeS1HP5ctPK\n"
+			+ "+1st6sIhdiVpopwFc+TwJWxqKdW18tlfT5jVv1E2DEnccw3kXilS9xAhWkfwrEvf\n"
+			+ "V5I74GydewFl32o+NZ8hdo9GL1I8zO1rIq/et8dSOWGuWf9BtKu/vTGTTQKBgFxU\n"
+			+ "VjsCnbvmsEwPUAL2hE/WrBFaKocnxXx5AFNt8lEyHtDwy4Sg1nygGcIJ4sD6koQk\n"
+			+ "RdClT3LkvR04TAiSY80bN/i6ZcPNGUwSaDGZEWAIOSWbkwZijZNFnSGOEgxZX/IG\n"
+			+ "yd39766vREEMTwEeiMNEOZQ/dmxkJm4OOVe25cLdAoGACOtPnq1Fxay80UYBf4rQ\n"
+			+ "+bJ9yX1ulB8WIree1hD7OHSB2lRHxrVYWrglrTvkh63Lgx+EcsTV788OsvAVfPPz\n"
+			+ "BZrn8SdDlQqalMxUBYEFwnsYD3cQ8yOUnijFVC4xNcdDv8OIqVgSk4KKxU5AshaA\n" + "xk6Mox+u8Cc2eAK12H13i+8=\n"
+			+ "-----END PRIVATE KEY-----\n";
 
-	private String idpPrivateKey = "-----BEGIN PRIVATE KEY-----\n" +
-		"MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4cn62E1xLqpN3\n" +
-		"4PmbrKBbkOXFjzWgJ9b+pXuaRft6A339uuIQeoeH5qeSKRVTl32L0gdz2ZivLwZX\n" +
-		"W+cqvftVW1tvEHvzJFyxeTW3fCUeCQsebLnA2qRa07RkxTo6Nf244mWWRDodcoHE\n" +
-		"fDUSbxfTZ6IExSojSIU2RnD6WllYWFdD1GFpBJOmQB8rAc8wJIBdHFdQnX8Ttl7h\n" +
-		"Z6rtgqEYMzYVMuJ2F2r1HSU1zSAvwpdYP6rRGFRJEfdA9mm3WKfNLSc5cljz0X/T\n" +
-		"Xy0vVlAV95l9qcfFzPmrkNIst9FZSwpvB49LyAVke04FQPPwLgVH4gphiJH3jvZ7\n" +
-		"I+J5lS8VAgMBAAECggEBAKyxBlIS7mcp3chvq0RF7B3PHFJMMzkwE+t3pLJcs4cZ\n" +
-		"nezh/KbREfP70QjXzk/llnZCvxeIs5vRu24vbdBm79qLHqBuHp8XfHHtuo2AfoAQ\n" +
-		"l4h047Xc/+TKMivnPQ0jX9qqndKDLqZDf5wnbslDmlskvF0a/MjsLU0TxtOfo+dB\n" +
-		"t55FW11cGqxZwhS5Gnr+cbw3OkHz23b9gEOt9qfwPVepeysbmm9FjU+k4yVa7rAN\n" +
-		"xcbzVb6Y7GCITe2tgvvEHmjB9BLmWrH3mZ3Af17YU/iN6TrpPd6Sj3QoS+2wGtAe\n" +
-		"HbUs3CKJu7bIHcj4poal6Kh8519S+erJTtqQ8M0ZiEECgYEA43hLYAPaUueFkdfh\n" +
-		"9K/7ClH6436CUH3VdizwUXi26fdhhV/I/ot6zLfU2mgEHU22LBECWQGtAFm8kv0P\n" +
-		"zPn+qjaR3e62l5PIlSYbnkIidzoDZ2ztu4jF5LgStlTJQPteFEGgZVl5o9DaSZOq\n" +
-		"Yd7G3XqXuQ1VGMW58G5FYJPtA1cCgYEAz5TPUtK+R2KXHMjUwlGY9AefQYRYmyX2\n" +
-		"Tn/OFgKvY8lpAkMrhPKONq7SMYc8E9v9G7A0dIOXvW7QOYSapNhKU+np3lUafR5F\n" +
-		"4ZN0bxZ9qjHbn3AMYeraKjeutHvlLtbHdIc1j3sxe/EzltRsYmiqLdEBW0p6hwWg\n" +
-		"tyGhYWVyaXMCgYAfDOKtHpmEy5nOCLwNXKBWDk7DExfSyPqEgSnk1SeS1HP5ctPK\n" +
-		"+1st6sIhdiVpopwFc+TwJWxqKdW18tlfT5jVv1E2DEnccw3kXilS9xAhWkfwrEvf\n" +
-		"V5I74GydewFl32o+NZ8hdo9GL1I8zO1rIq/et8dSOWGuWf9BtKu/vTGTTQKBgFxU\n" +
-		"VjsCnbvmsEwPUAL2hE/WrBFaKocnxXx5AFNt8lEyHtDwy4Sg1nygGcIJ4sD6koQk\n" +
-		"RdClT3LkvR04TAiSY80bN/i6ZcPNGUwSaDGZEWAIOSWbkwZijZNFnSGOEgxZX/IG\n" +
-		"yd39766vREEMTwEeiMNEOZQ/dmxkJm4OOVe25cLdAoGACOtPnq1Fxay80UYBf4rQ\n" +
-		"+bJ9yX1ulB8WIree1hD7OHSB2lRHxrVYWrglrTvkh63Lgx+EcsTV788OsvAVfPPz\n" +
-		"BZrn8SdDlQqalMxUBYEFwnsYD3cQ8yOUnijFVC4xNcdDv8OIqVgSk4KKxU5AshaA\n" +
-		"xk6Mox+u8Cc2eAK12H13i+8=\n" +
-		"-----END PRIVATE KEY-----\n";
+	private String spCertificate = "MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n"
+			+ "VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG\n"
+			+ "A1UECgwUU3ByaW5nIFNlY3VyaXR5IFNBTUwxCzAJBgNVBAsMAnNwMSAwHgYDVQQD\n"
+			+ "DBdzcC5zcHJpbmcuc2VjdXJpdHkuc2FtbDAeFw0xODA1MTQxNDMwNDRaFw0yODA1\n"
+			+ "MTExNDMwNDRaMIGEMQswCQYDVQQGEwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjES\n"
+			+ "MBAGA1UEBwwJVmFuY291dmVyMR0wGwYDVQQKDBRTcHJpbmcgU2VjdXJpdHkgU0FN\n"
+			+ "TDELMAkGA1UECwwCc3AxIDAeBgNVBAMMF3NwLnNwcmluZy5zZWN1cml0eS5zYW1s\n"
+			+ "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDRu7/EI0BlNzMEBFVAcbx+lLos\n"
+			+ "vzIWU+01dGTY8gBdhMQNYKZ92lMceo2CuVJ66cUURPym3i7nGGzoSnAxAre+0YIM\n"
+			+ "+U0razrWtAUE735bkcqELZkOTZLelaoOztmWqRbe5OuEmpewH7cx+kNgcVjdctOG\n"
+			+ "y3Q6x+I4qakY/9qhBQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAAeViTvHOyQopWEi\n"
+			+ "XOfI2Z9eukwrSknDwq/zscR0YxwwqDBMt/QdAODfSwAfnciiYLkmEjlozWRtOeN+\n"
+			+ "qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD\n" + "RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B";
 
-	private String spCertificate = "MIICgTCCAeoCCQCuVzyqFgMSyDANBgkqhkiG9w0BAQsFADCBhDELMAkGA1UEBhMC\n" +
-		"VVMxEzARBgNVBAgMCldhc2hpbmd0b24xEjAQBgNVBAcMCVZhbmNvdXZlcjEdMBsG\n" +
-		"A1UECgwUU3ByaW5nIFNlY3VyaXR5IFNBTUwxCzAJBgNVBAsMAnNwMSAwHgYDVQQD\n" +
-		"DBdzcC5zcHJpbmcuc2VjdXJpdHkuc2FtbDAeFw0xODA1MTQxNDMwNDRaFw0yODA1\n" +
-		"MTExNDMwNDRaMIGEMQswCQYDVQQGEwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjES\n" +
-		"MBAGA1UEBwwJVmFuY291dmVyMR0wGwYDVQQKDBRTcHJpbmcgU2VjdXJpdHkgU0FN\n" +
-		"TDELMAkGA1UECwwCc3AxIDAeBgNVBAMMF3NwLnNwcmluZy5zZWN1cml0eS5zYW1s\n" +
-		"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDRu7/EI0BlNzMEBFVAcbx+lLos\n" +
-		"vzIWU+01dGTY8gBdhMQNYKZ92lMceo2CuVJ66cUURPym3i7nGGzoSnAxAre+0YIM\n" +
-		"+U0razrWtAUE735bkcqELZkOTZLelaoOztmWqRbe5OuEmpewH7cx+kNgcVjdctOG\n" +
-		"y3Q6x+I4qakY/9qhBQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAAeViTvHOyQopWEi\n" +
-		"XOfI2Z9eukwrSknDwq/zscR0YxwwqDBMt/QdAODfSwAfnciiYLkmEjlozWRtOeN+\n" +
-		"qK7UFgP1bRl5qksrYX5S0z2iGJh0GvonLUt3e20Ssfl5tTEDDnAEUMLfBkyaxEHD\n" +
-		"RZ/nbTJ7VTeZOSyRoVn5XHhpuJ0B";
 }

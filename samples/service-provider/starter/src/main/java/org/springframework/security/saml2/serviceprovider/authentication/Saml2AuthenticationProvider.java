@@ -88,9 +88,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	private static Log logger = LogFactory.getLog(Saml2AuthenticationProvider.class);
 
 	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
+
 	private final Saml2ServiceProviderRepository serviceProviderRepository;
+
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
-	private int responseTimeToleranceMillis = 1000 * 60 * 5; //5 minutes
+
+	private int responseTimeToleranceMillis = 1000 * 60 * 5; // 5 minutes
 
 	public Saml2AuthenticationProvider(Saml2ServiceProviderRepository serviceProviderRepository) {
 		notNull(serviceProviderRepository, "serviceProviderRepository must not be null");
@@ -108,8 +111,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	@Override
 	public boolean supports(Class<?> authentication) {
-		return authentication != null &&
-			Saml2AuthenticationToken.class.isAssignableFrom(authentication);
+		return authentication != null && Saml2AuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
 	@Override
@@ -117,19 +119,16 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		Saml2AuthenticationToken token = (Saml2AuthenticationToken) authentication;
 		String xml = token.getSaml2Response();
 		Response samlResponse = getSaml2Response(xml);
-		Saml2ServiceProviderRegistration sp =
-			serviceProviderRepository.getServiceProvider(token.getDerivedServiceProviderEntityId());
+		Saml2ServiceProviderRegistration sp = serviceProviderRepository
+				.getServiceProvider(token.getDerivedServiceProviderEntityId());
 
 		Assertion assertion = validateSaml2Response(sp, token.getRecipientUrl(), samlResponse);
 		final String username = getUsername(sp, assertion);
 		if (username == null) {
-			throw new UsernameNotFoundException("Assertion ["+assertion.getID()+"] is missing a user identifier");
+			throw new UsernameNotFoundException("Assertion [" + assertion.getID() + "] is missing a user identifier");
 		}
-		return new Saml2Authentication(
-			token.getSaml2Response(),
-			() -> username,
-			authoritiesMapper.mapAuthorities(getAssertionAuthorities(assertion))
-		);
+		return new Saml2Authentication(token.getSaml2Response(), () -> username,
+				authoritiesMapper.mapAuthorities(getAssertionAuthorities(assertion)));
 	}
 
 	protected List<? extends GrantedAuthority> getAssertionAuthorities(Assertion assertion) {
@@ -151,18 +150,14 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		return null;
 	}
 
-	private Assertion validateSaml2Response(Saml2ServiceProviderRegistration sp,
-											String recipient,
-											Response samlResponse) throws AuthenticationException {
-		if (
-			hasText(samlResponse.getDestination()) &&
-			!recipient.equals(samlResponse.getDestination())
-		) {
+	private Assertion validateSaml2Response(Saml2ServiceProviderRegistration sp, String recipient,
+			Response samlResponse) throws AuthenticationException {
+		if (hasText(samlResponse.getDestination()) && !recipient.equals(samlResponse.getDestination())) {
 			throw new ProviderNotFoundException("Invalid SAML response destination: " + samlResponse.getDestination());
 		}
 
 		final String issuer = samlResponse.getIssuer().getValue();
-		logger.debug("Processing SAML response from "+issuer);
+		logger.debug("Processing SAML response from " + issuer);
 		final Saml2IdentityProviderDetails idp = sp.getIdentityProvider(issuer);
 		if (idp == null) {
 			throw new ProviderNotFoundException(format("SAML 2 Provider for %s was not found.", issuer));
@@ -182,8 +177,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		throw new InsufficientAuthenticationException("Unable to find a valid assertion");
 	}
 
-	private boolean hasValidSignature(SignableSAMLObject samlResponse,
-									  Saml2IdentityProviderDetails idp) {
+	private boolean hasValidSignature(SignableSAMLObject samlResponse, Saml2IdentityProviderDetails idp) {
 		if (!samlResponse.isSigned()) {
 			return false;
 		}
@@ -195,26 +189,21 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			try {
 				SignatureValidator.validate(samlResponse.getSignature(), credential);
 				return true;
-			} catch (SignatureException ignored) {
+			}
+			catch (SignatureException ignored) {
 			}
 		}
 		return false;
 	}
 
-	private boolean isValidAssertion(Saml2ServiceProviderRegistration sp,
-									 String recipient,
-									 Assertion a,
-									 Saml2IdentityProviderDetails idp,
-									 boolean signatureRequired) {
+	private boolean isValidAssertion(Saml2ServiceProviderRegistration sp, String recipient, Assertion a,
+			Saml2IdentityProviderDetails idp, boolean signatureRequired) {
 		final SAML20AssertionValidator validator = getAssertionValidator(idp);
 		Map<String, Object> validationParams = new HashMap<>();
 		validationParams.put(SAML2AssertionValidationParameters.SIGNATURE_REQUIRED, false);
-		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW, Duration.ofMillis(
-			responseTimeToleranceMillis));
-		validationParams.put(
-			SAML2AssertionValidationParameters.COND_VALID_AUDIENCES,
-			singleton(sp.getEntityId())
-		);
+		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW,
+				Duration.ofMillis(responseTimeToleranceMillis));
+		validationParams.put(SAML2AssertionValidationParameters.COND_VALID_AUDIENCES, singleton(sp.getEntityId()));
 		if (hasText(recipient)) {
 			validationParams.put(SAML2AssertionValidationParameters.SC_VALID_RECIPIENTS, singleton(recipient));
 		}
@@ -225,12 +214,13 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		}
 		a.setSignature(null);
 
-		//validation for recipient
+		// validation for recipient
 		ValidationContext vctx = new ValidationContext(validationParams);
 		try {
 			final ValidationResult result = validator.validate(a, vctx);
 			return result.equals(ValidationResult.VALID);
-		} catch (AssertionValidationException e) {
+		}
+		catch (AssertionValidationException e) {
 			logger.debug("Failed to validate assertion:", e);
 			return false;
 		}
@@ -249,11 +239,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 	}
 
 	private SAML20AssertionValidator getAssertionValidator(Saml2IdentityProviderDetails provider) {
-		List<ConditionValidator> conditions = Collections.singletonList(
-			new AudienceRestrictionConditionValidator()
-		);
-		final BearerSubjectConfirmationValidator subjectConfirmationValidator =
-			new BearerSubjectConfirmationValidator();
+		List<ConditionValidator> conditions = Collections.singletonList(new AudienceRestrictionConditionValidator());
+		final BearerSubjectConfirmationValidator subjectConfirmationValidator = new BearerSubjectConfirmationValidator();
 
 		List<SubjectConfirmationValidator> subjects = Collections.singletonList(subjectConfirmationValidator);
 		List<StatementValidator> statements = Collections.emptyList();
@@ -264,19 +251,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			credentials.add(cred);
 		}
 		CredentialResolver credentialsResolver = new CollectionCredentialResolver(credentials);
-		SignatureTrustEngine signatureTrustEngine = new ExplicitKeySignatureTrustEngine(
-			credentialsResolver,
-			DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver()
-		);
+		SignatureTrustEngine signatureTrustEngine = new ExplicitKeySignatureTrustEngine(credentialsResolver,
+				DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
 		SignaturePrevalidator signaturePrevalidator = new SAMLSignatureProfileValidator();
 		;
-		return new SAML20AssertionValidator(
-			conditions,
-			subjects,
-			statements,
-			signatureTrustEngine,
-			signaturePrevalidator
-		);
+		return new SAML20AssertionValidator(conditions, subjects, statements, signatureTrustEngine,
+				signaturePrevalidator);
 	}
 
 	private Credential getVerificationCredential(X509Certificate certificate) {
@@ -297,7 +277,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return decrypter.decrypt(assertion);
-			} catch (DecryptionException e) {
+			}
+			catch (DecryptionException e) {
 				throw new Saml2Exception(e);
 			}
 		}
@@ -310,7 +291,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			final Decrypter decrypter = getDecrypter(key);
 			try {
 				return (NameID) decrypter.decrypt(assertion);
-			} catch (DecryptionException e) {
+			}
+			catch (DecryptionException e) {
 				last = new Saml2Exception(e);
 			}
 		}

@@ -50,13 +50,10 @@ import static java.util.Arrays.asList;
 final class OpenSaml2Implementation {
 
 	private static final BasicParserPool parserPool = new BasicParserPool();
+
 	private static final EncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver(
-		asList(
-			new InlineEncryptedKeyResolver(),
-			new EncryptedElementTypeEncryptedKeyResolver(),
-			new SimpleRetrievalMethodEncryptedKeyResolver()
-		)
-	);
+			asList(new InlineEncryptedKeyResolver(), new EncryptedElementTypeEncryptedKeyResolver(),
+					new SimpleRetrievalMethodEncryptedKeyResolver()));
 
 	OpenSaml2Implementation() {
 		bootstrap();
@@ -71,29 +68,28 @@ final class OpenSaml2Implementation {
 	}
 
 	/*
-	==============================================================
-	                     PRIVATE METHODS
-	==============================================================
+	 * ============================================================== PRIVATE METHODS
+	 * ==============================================================
 	 */
 	private static void bootstrap() {
-		//configure default values
-		//maxPoolSize = 5;
+		// configure default values
+		// maxPoolSize = 5;
 		parserPool.setMaxPoolSize(50);
-		//coalescing = true;
+		// coalescing = true;
 		parserPool.setCoalescing(true);
-		//expandEntityReferences = false;
+		// expandEntityReferences = false;
 		parserPool.setExpandEntityReferences(false);
-		//ignoreComments = true;
+		// ignoreComments = true;
 		parserPool.setIgnoreComments(true);
-		//ignoreElementContentWhitespace = true;
+		// ignoreElementContentWhitespace = true;
 		parserPool.setIgnoreElementContentWhitespace(true);
-		//namespaceAware = true;
+		// namespaceAware = true;
 		parserPool.setNamespaceAware(true);
-		//schema = null;
+		// schema = null;
 		parserPool.setSchema(null);
-		//dtdValidating = false;
+		// dtdValidating = false;
 		parserPool.setDTDValidating(false);
-		//xincludeAware = false;
+		// xincludeAware = false;
 		parserPool.setXincludeAware(false);
 
 		Map<String, Object> builderAttributes = new HashMap<>();
@@ -103,24 +99,22 @@ final class OpenSaml2Implementation {
 		parserBuilderFeatures.put("http://apache.org/xml/features/disallow-doctype-decl", TRUE);
 		parserBuilderFeatures.put("http://javax.xml.XMLConstants/feature/secure-processing", TRUE);
 		parserBuilderFeatures.put("http://xml.org/sax/features/external-general-entities", FALSE);
-		parserBuilderFeatures.put(
-			"http://apache.org/xml/features/validation/schema/normalized-value",
-			FALSE
-		);
+		parserBuilderFeatures.put("http://apache.org/xml/features/validation/schema/normalized-value", FALSE);
 		parserBuilderFeatures.put("http://xml.org/sax/features/external-parameter-entities", FALSE);
 		parserBuilderFeatures.put("http://apache.org/xml/features/dom/defer-node-expansion", FALSE);
 		parserPool.setBuilderFeatures(parserBuilderFeatures);
 
 		try {
 			parserPool.initialize();
-		} catch (ComponentInitializationException x) {
+		}
+		catch (ComponentInitializationException x) {
 			throw new Saml2Exception("Unable to initialize OpenSaml v3 ParserPool", x);
 		}
 
-
 		try {
 			InitializationService.initialize();
-		} catch (InitializationException e) {
+		}
+		catch (InitializationException e) {
 			throw new Saml2Exception("Unable to initialize OpenSaml v3", e);
 		}
 
@@ -134,7 +128,6 @@ final class OpenSaml2Implementation {
 		}
 
 		registry.setParserPool(parserPool);
-
 
 	}
 
@@ -155,8 +148,10 @@ final class OpenSaml2Implementation {
 			Document document = parserPool.parse(new ByteArrayInputStream(xml));
 			Element element = document.getDocumentElement();
 			return getUnmarshallerFactory().getUnmarshaller(element).unmarshall(element);
-		} catch (UnmarshallingException | XMLParserException e) {
+		}
+		catch (UnmarshallingException | XMLParserException e) {
 			throw new Saml2Exception(e);
 		}
 	}
+
 }

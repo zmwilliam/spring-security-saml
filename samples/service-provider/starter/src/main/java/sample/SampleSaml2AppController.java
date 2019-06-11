@@ -28,15 +28,16 @@ import org.apache.commons.logging.LogFactory;
 
 @Controller
 public class SampleSaml2AppController {
+
 	private static final Log logger = LogFactory.getLog(Saml2ServiceProviderStarterApplication.class);
 
-	@RequestMapping(value = {"/logged-in"})
+	@RequestMapping(value = { "/logged-in" })
 	public String loggedIn() {
 		logger.info("Sample SP Application - You are logged in!");
 		return "logged-in";
 	}
 
-	@RequestMapping(value = {"/", "/index"})
+	@RequestMapping(value = { "/", "/index" })
 	public String landingPage() {
 		logger.info("Sample SP Application - Landing Page");
 		if (isLoggedIn()) {
@@ -49,8 +50,8 @@ public class SampleSaml2AppController {
 
 	private boolean isLoggedIn() {
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		return authentication != null &&
-			!(authentication instanceof AnonymousAuthenticationToken) &&
-			authentication.isAuthenticated();
+		return authentication != null && !(authentication instanceof AnonymousAuthenticationToken)
+				&& authentication.isAuthenticated();
 	}
+
 }

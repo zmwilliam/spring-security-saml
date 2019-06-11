@@ -37,6 +37,7 @@ import static java.util.Optional.ofNullable;
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.saml2")
 public class Saml2SampleBootConfiguration {
+
 	static {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
@@ -46,11 +47,8 @@ public class Saml2SampleBootConfiguration {
 	@Bean
 	public Saml2ServiceProviderRepository saml2ServiceProviderRegistrationRepository() {
 		final ServiceProvider provider = this.provider;
-		return eid -> new Saml2ServiceProviderRegistration(
-			ofNullable(provider.getEntityId()).orElse(eid),
-			provider.getSaml2X509Credentials(),
-			getIdentityProviders(provider.getIdentityProviders())
-		);
+		return eid -> new Saml2ServiceProviderRegistration(ofNullable(provider.getEntityId()).orElse(eid),
+				provider.getSaml2X509Credentials(), getIdentityProviders(provider.getIdentityProviders()));
 	}
 
 	public void setServiceProvider(ServiceProvider provider) {
@@ -59,18 +57,16 @@ public class Saml2SampleBootConfiguration {
 
 	private List<Saml2IdentityProviderDetails> getIdentityProviders(List<IdentityProvider> identityProviders) {
 		return identityProviders.stream()
-			.map(p ->
-				new Saml2IdentityProviderDetails(
-					p.getEntityId(),
-					p.getCertificates()
-				)
-			)
-			.collect(Collectors.toList());
+				.map(p -> new Saml2IdentityProviderDetails(p.getEntityId(), p.getCertificates()))
+				.collect(Collectors.toList());
 	}
 
 	public static class ServiceProvider {
+
 		private List<IdentityProvider> identityProviders = emptyList();
+
 		private String entityId;
+
 		private List<Saml2X509Credential> credentials = emptyList();
 
 		public List<IdentityProvider> getIdentityProviders() {
@@ -95,14 +91,15 @@ public class Saml2SampleBootConfiguration {
 
 		public void setCredentials(List<StringX509Credential> credentials) {
 			final Saml2X509CredentialConverter converter = new Saml2X509CredentialConverter();
-			this.credentials = credentials.stream()
-				.map(c -> converter.convert(c))
-				.collect(Collectors.toList());
+			this.credentials = credentials.stream().map(c -> converter.convert(c)).collect(Collectors.toList());
 		}
+
 	}
 
 	public static class IdentityProvider {
+
 		private String entityId;
+
 		private List<X509Certificate> certificates = emptyList();
 
 		public String getEntityId() {
@@ -120,11 +117,15 @@ public class Saml2SampleBootConfiguration {
 		public void setCertificates(List<X509Certificate> certificates) {
 			this.certificates = certificates;
 		}
+
 	}
 
 	public static class StringX509Credential {
+
 		private String privateKey;
+
 		private String passphrase;
+
 		private String certificate;
 
 		public String getPrivateKey() {
@@ -150,7 +151,7 @@ public class Saml2SampleBootConfiguration {
 		public void setCertificate(String certificate) {
 			this.certificate = certificate;
 		}
-	}
 
+	}
 
 }

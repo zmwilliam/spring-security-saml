@@ -25,19 +25,19 @@ import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
-
 /**
  * Configuration object that represents a local(hosted) service provider
  */
 public class Saml2ServiceProviderRegistration {
 
 	private final String entityId;
+
 	private final List<Saml2X509Credential> credentials = new LinkedList<>();
+
 	private final List<Saml2IdentityProviderDetails> identityProviders = new LinkedList<>();
 
-	public Saml2ServiceProviderRegistration(String entityId,
-											List<Saml2X509Credential> credentials,
-											List<Saml2IdentityProviderDetails> identityProviders) {
+	public Saml2ServiceProviderRegistration(String entityId, List<Saml2X509Credential> credentials,
+			List<Saml2IdentityProviderDetails> identityProviders) {
 		notEmpty(credentials, "at least one private key and certificate is required for signed and encrypted messages");
 		credentials.stream().forEach(c -> {
 			notNull(c.getPrivateKey(), "private key required in all credentials");
@@ -58,10 +58,7 @@ public class Saml2ServiceProviderRegistration {
 	}
 
 	public Saml2IdentityProviderDetails getIdentityProvider(String entityId) {
-		return identityProviders.stream()
-			.filter(idp -> entityId.equals(idp.getEntityId()))
-			.findFirst()
-			.orElse(null);
+		return identityProviders.stream().filter(idp -> entityId.equals(idp.getEntityId())).findFirst().orElse(null);
 	}
 
 	public List<Saml2IdentityProviderDetails> getIdentityProviders() {

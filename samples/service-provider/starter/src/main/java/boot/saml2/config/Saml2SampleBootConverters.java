@@ -48,25 +48,26 @@ public class Saml2SampleBootConverters {
 	@Component
 	@ConfigurationPropertiesBinding
 	public static class X509CertificateConverter implements Converter<String, X509Certificate> {
+
 		@Override
 		public X509Certificate convert(String source) {
 			try {
 				return X509Support.decodeCertificate(source);
-			} catch (CertificateException e) {
+			}
+			catch (CertificateException e) {
 				throw new IllegalArgumentException(e);
 			}
 		}
+
 	}
 
 	@Component
 	@ConfigurationPropertiesBinding
 	public static class Saml2X509CredentialConverter implements Converter<StringX509Credential, Saml2X509Credential> {
+
 		@Override
 		public Saml2X509Credential convert(StringX509Credential source) {
-			final PrivateKey privateKey = getPrivateKey(
-				source.getPrivateKey(),
-				source.getPassphrase()
-			);
+			final PrivateKey privateKey = getPrivateKey(source.getPrivateKey(), source.getPassphrase());
 			final X509Certificate certificate = new X509CertificateConverter().convert(source.getCertificate());
 			return new Saml2X509Credential(privateKey, certificate);
 		}
@@ -86,8 +87,7 @@ public class Saml2SampleBootConverters {
 				else if (obj instanceof PEMEncryptedKeyPair) {
 					// Encrypted key - we will use provided password
 					PEMEncryptedKeyPair ckp = (PEMEncryptedKeyPair) obj;
-					PEMDecryptorProvider decProv =
-						new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
+					PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
 					kp = converter.getKeyPair(ckp.decryptKeyPair(decProv));
 				}
 				else {
@@ -97,10 +97,12 @@ public class Saml2SampleBootConverters {
 				}
 
 				return kp.getPrivate();
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw new IllegalArgumentException(e);
 			}
 		}
+
 	}
 
 }

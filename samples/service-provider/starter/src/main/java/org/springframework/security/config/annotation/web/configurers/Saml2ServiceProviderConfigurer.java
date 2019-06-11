@@ -32,15 +32,18 @@ import org.springframework.security.web.header.HeaderWriterFilter;
 
 import static java.util.Optional.ofNullable;
 
-public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
+public class Saml2ServiceProviderConfigurer
+		extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
+
 	public static Saml2ServiceProviderConfigurer saml2Login() {
 		return new Saml2ServiceProviderConfigurer();
 	}
 
 	private AuthenticationProvider authenticationProvider;
+
 	private Saml2ServiceProviderRepository serviceProviderRepository;
 
-	static  {
+	static {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
@@ -57,19 +60,12 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 	@Override
 	public void init(HttpSecurity builder) throws Exception {
 		super.init(builder);
-		builder.authorizeRequests()
-			.mvcMatchers("/saml/sp/**").permitAll()
-			.anyRequest().authenticated();
+		builder.authorizeRequests().mvcMatchers("/saml/sp/**").permitAll().anyRequest().authenticated();
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			Saml2ServiceProviderRepository sp =
-				getSharedObject(
-					builder,
-					Saml2ServiceProviderRepository.class,
-					() -> serviceProviderRepository,
-					null
-				);
+			Saml2ServiceProviderRepository sp = getSharedObject(builder, Saml2ServiceProviderRepository.class,
+					() -> serviceProviderRepository, null);
 
 			authenticationProvider = new Saml2AuthenticationProvider(sp);
 		}
@@ -86,7 +82,6 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		builder.addFilterAfter(filter, HeaderWriterFilter.class);
 	}
 
-
 	private <C> C getSharedObject(HttpSecurity http, Class<C> clazz) {
 		return http.getSharedObject(clazz);
 	}
@@ -97,16 +92,15 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		}
 	}
 
-	private <C> C getSharedObject(HttpSecurity http,
-								  Class<C> clazz,
-								  Supplier<? extends C> creator,
-								  Object existingInstance) {
+	private <C> C getSharedObject(HttpSecurity http, Class<C> clazz, Supplier<? extends C> creator,
+			Object existingInstance) {
 		C result = ofNullable((C) existingInstance).orElseGet(() -> getSharedObject(http, clazz));
 		if (result == null) {
 			ApplicationContext context = getSharedObject(http, ApplicationContext.class);
 			try {
 				result = context.getBean(clazz);
-			} catch (NoSuchBeanDefinitionException e) {
+			}
+			catch (NoSuchBeanDefinitionException e) {
 				if (creator != null) {
 					result = creator.get();
 				}
@@ -118,4 +112,5 @@ public class Saml2ServiceProviderConfigurer extends AbstractHttpConfigurer<Saml2
 		setSharedObject(http, clazz, result);
 		return result;
 	}
+
 }

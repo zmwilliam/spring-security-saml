@@ -50,7 +50,8 @@ import static java.util.zip.Deflater.DEFLATED;
 import static org.opensaml.security.crypto.KeySupport.generateKey;
 
 final class Saml2TestUtils {
-	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[]{'\n'});
+
+	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[] { '\n' });
 
 	static String encode(byte[] b) {
 		return UNCHUNKED_ENCODER.encodeToString(b);
@@ -67,7 +68,8 @@ final class Saml2TestUtils {
 			deflater.write(s.getBytes(UTF_8));
 			deflater.finish();
 			return b.toByteArray();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new Saml2Exception("Unable to deflate string", e);
 		}
 	}
@@ -79,31 +81,32 @@ final class Saml2TestUtils {
 			iout.write(b);
 			iout.finish();
 			return new String(out.toByteArray(), UTF_8);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new Saml2Exception("Unable to inflate string", e);
 		}
 	}
 
-	static EncryptedAssertion encryptAssertion(Assertion assertion,
-											   X509Certificate certificate) {
+	static EncryptedAssertion encryptAssertion(Assertion assertion, X509Certificate certificate) {
 		Encrypter encrypter = getEncrypter(certificate);
 		try {
 			Encrypter.KeyPlacement keyPlacement = Encrypter.KeyPlacement.valueOf("PEER");
 			encrypter.setKeyPlacement(keyPlacement);
 			return encrypter.encrypt(assertion);
-		} catch (EncryptionException e) {
+		}
+		catch (EncryptionException e) {
 			throw new Saml2Exception("Unable to encrypt assertion.", e);
 		}
 	}
 
-	static EncryptedID encryptNameId(NameID nameID,
-									 X509Certificate certificate) {
+	static EncryptedID encryptNameId(NameID nameID, X509Certificate certificate) {
 		Encrypter encrypter = getEncrypter(certificate);
 		try {
 			Encrypter.KeyPlacement keyPlacement = Encrypter.KeyPlacement.valueOf("PEER");
 			encrypter.setKeyPlacement(keyPlacement);
 			return encrypter.encrypt(nameID);
-		} catch (EncryptionException e) {
+		}
+		catch (EncryptionException e) {
 			throw new Saml2Exception("Unable to encrypt nameID.", e);
 		}
 	}
@@ -132,8 +135,10 @@ final class Saml2TestUtils {
 			String jceAlgorithmName = JCEMapper.getJCEKeyAlgorithmFromURI(algoURI);
 			int keyLength = JCEMapper.getKeyLengthFromURI(algoURI);
 			return generateKey(jceAlgorithmName, keyLength, null);
-		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+		}
+		catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			throw new Saml2Exception(e);
 		}
 	}
+
 }

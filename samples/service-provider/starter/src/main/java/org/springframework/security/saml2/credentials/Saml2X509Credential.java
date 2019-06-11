@@ -23,18 +23,18 @@ import java.security.cert.X509Certificate;
 import static org.springframework.util.Assert.notNull;
 
 /**
- * Saml2X509Credential is meant to hold an X509 certificate, or an X509 certificate and a private key.
- * Per: https://www.oasis-open.org/committees/download.php/8958/sstc-saml-implementation-guidelines-draft-01.pdf
- * Line: 584, Section 4.3 Credentials
- * Used for both signing and encryption/decryption
+ * Saml2X509Credential is meant to hold an X509 certificate, or an X509 certificate and a
+ * private key. Per:
+ * https://www.oasis-open.org/committees/download.php/8958/sstc-saml-implementation-guidelines-draft-01.pdf
+ * Line: 584, Section 4.3 Credentials Used for both signing and encryption/decryption
  */
 public class Saml2X509Credential {
 
 	private final PrivateKey privateKey;
+
 	private final X509Certificate certificate;
 
-	public Saml2X509Credential(PrivateKey privateKey,
-							   X509Certificate certificate) {
+	public Saml2X509Credential(PrivateKey privateKey, X509Certificate certificate) {
 		notNull(certificate, "certificate is required");
 		this.privateKey = privateKey;
 		this.certificate = certificate;

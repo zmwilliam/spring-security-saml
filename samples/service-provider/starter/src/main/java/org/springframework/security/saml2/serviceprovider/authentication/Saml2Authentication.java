@@ -24,12 +24,13 @@ import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.GrantedAuthority;
 
 public class Saml2Authentication extends AbstractAuthenticationToken {
+
 	private final String saml2Response;
+
 	private final AuthenticatedPrincipal principal;
 
-	public Saml2Authentication(String saml2Response,
-							   AuthenticatedPrincipal principal,
-							   Collection<? extends GrantedAuthority> authorities) {
+	public Saml2Authentication(String saml2Response, AuthenticatedPrincipal principal,
+			Collection<? extends GrantedAuthority> authorities) {
 		super(authorities);
 		this.saml2Response = saml2Response;
 		this.principal = principal;

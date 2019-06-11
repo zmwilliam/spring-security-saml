@@ -20,13 +20,14 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
+
 	private final String saml2Response;
+
 	private final String recipientUrl;
+
 	private final String derivedServiceProviderEntityId;
 
-	public Saml2AuthenticationToken(String saml2Response,
-									String recipientUrl,
-									String derivedServiceProviderEntityId) {
+	public Saml2AuthenticationToken(String saml2Response, String recipientUrl, String derivedServiceProviderEntityId) {
 		super(null);
 		this.saml2Response = saml2Response;
 		this.recipientUrl = recipientUrl;
@@ -64,4 +65,5 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 	public void setAuthenticated(boolean authenticated) {
 		throw new IllegalArgumentException();
 	}
+
 }
