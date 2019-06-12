@@ -93,7 +93,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 
-	private int responseTimeToleranceMillis = 1000 * 60 * 5; // 5 minutes
+	private int responseTimeValidationSkewMillis = 1000 * 60 * 5; // 5 minutes
 
 	public Saml2AuthenticationProvider(Saml2ServiceProviderRepository serviceProviderRepository) {
 		notNull(serviceProviderRepository, "serviceProviderRepository must not be null");
@@ -105,8 +105,8 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		this.authoritiesMapper = authoritiesMapper;
 	}
 
-	public void setResponseTimeToleranceMillis(int responseTimeToleranceMillis) {
-		this.responseTimeToleranceMillis = responseTimeToleranceMillis;
+	public void setResponseTimeValidationSkewMillis(int responseTimeValidationSkewMillis) {
+		this.responseTimeValidationSkewMillis = responseTimeValidationSkewMillis;
 	}
 
 	@Override
@@ -202,7 +202,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		Map<String, Object> validationParams = new HashMap<>();
 		validationParams.put(SAML2AssertionValidationParameters.SIGNATURE_REQUIRED, false);
 		validationParams.put(SAML2AssertionValidationParameters.CLOCK_SKEW,
-				Duration.ofMillis(responseTimeToleranceMillis));
+				Duration.ofMillis(responseTimeValidationSkewMillis));
 		validationParams.put(SAML2AssertionValidationParameters.COND_VALID_AUDIENCES, singleton(sp.getEntityId()));
 		if (hasText(recipient)) {
 			validationParams.put(SAML2AssertionValidationParameters.SC_VALID_RECIPIENTS, singleton(recipient));
