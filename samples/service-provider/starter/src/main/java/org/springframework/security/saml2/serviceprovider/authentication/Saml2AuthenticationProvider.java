@@ -218,7 +218,12 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		ValidationContext vctx = new ValidationContext(validationParams);
 		try {
 			final ValidationResult result = validator.validate(a, vctx);
-			return result.equals(ValidationResult.VALID);
+			final boolean valid = result.equals(ValidationResult.VALID);
+			if (!valid) {
+				logger.debug(format("Failed to validate assertion from %s with user %s", idp.getEntityId(),
+						getUsername(sp, a)));
+			}
+			return valid;
 		}
 		catch (AssertionValidationException e) {
 			logger.debug("Failed to validate assertion:", e);
