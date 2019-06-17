@@ -29,15 +29,23 @@ import static org.springframework.util.Assert.notNull;
  * Line: 584, Section 4.3 Credentials Used for both signing and encryption/decryption
  */
 public class Saml2X509Credential {
+	public	 enum KeyUsage {
+		SIGNING,
+		ENCRYPTION,
+		SIGNING_AND_ENCRYPTION
+	}
 
 	private final PrivateKey privateKey;
-
 	private final X509Certificate certificate;
+	private final KeyUsage keyUsage;
 
-	public Saml2X509Credential(PrivateKey privateKey, X509Certificate certificate) {
+	public Saml2X509Credential(PrivateKey privateKey,
+							   X509Certificate certificate,
+							   KeyUsage usage) {
 		notNull(certificate, "certificate is required");
 		this.privateKey = privateKey;
 		this.certificate = certificate;
+		this.keyUsage = usage;
 	}
 
 	public PrivateKey getPrivateKey() {
@@ -48,4 +56,7 @@ public class Saml2X509Credential {
 		return certificate;
 	}
 
+	public KeyUsage getKeyUsage() {
+		return keyUsage;
+	}
 }

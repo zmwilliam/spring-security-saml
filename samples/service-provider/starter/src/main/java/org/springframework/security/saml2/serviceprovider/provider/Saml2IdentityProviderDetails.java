@@ -17,9 +17,11 @@
 
 package org.springframework.security.saml2.serviceprovider.provider;
 
+import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
@@ -29,15 +31,23 @@ import static org.springframework.util.Assert.notNull;
 public class Saml2IdentityProviderDetails {
 
 	private final String entityId;
-
+	private final String alias;
+	private final URI webSsoUrl;
 	private final List<X509Certificate> verificationCredentials;
 
-	public Saml2IdentityProviderDetails(String entityId, List<X509Certificate> verificationCredentials) {
-		notNull(entityId, "entityId is required");
+	public Saml2IdentityProviderDetails(String entityId,
+										String alias,
+										URI webSsoUrl,
+										List<X509Certificate> verificationCredentials) {
+		hasText(entityId, "entityId is required");
+		hasText(entityId, "alias is required");
 		notEmpty(verificationCredentials, "verification credentials are required");
+		notNull(webSsoUrl, "webSsoUrl is required");
 		verificationCredentials.stream().forEach(c -> notNull(c, "verification credentials cannot be null"));
 		this.entityId = entityId;
+		this.alias = alias;
 		this.verificationCredentials = verificationCredentials;
+		this.webSsoUrl = webSsoUrl;
 	}
 
 	public String getEntityId() {
@@ -48,4 +58,11 @@ public class Saml2IdentityProviderDetails {
 		return verificationCredentials;
 	}
 
+	public String getAlias() {
+		return alias;
+	}
+
+	public URI getWebSsoUrl() {
+		return webSsoUrl;
+	}
 }

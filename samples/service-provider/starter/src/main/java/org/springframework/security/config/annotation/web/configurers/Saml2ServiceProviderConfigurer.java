@@ -17,18 +17,28 @@
 
 package org.springframework.security.config.annotation.web.configurers;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
+import javax.servlet.Filter;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.header.HeaderWriterFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.util.Optional.ofNullable;
 
@@ -40,8 +50,9 @@ public class Saml2ServiceProviderConfigurer
 	}
 
 	private AuthenticationProvider authenticationProvider;
-
 	private Saml2ServiceProviderRepository serviceProviderRepository;
+	private AuthenticationEntryPoint entryPoint;
+	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
 	static {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -52,8 +63,18 @@ public class Saml2ServiceProviderConfigurer
 		return this;
 	}
 
+	public Saml2ServiceProviderConfigurer authenticationRequestResolver(Saml2AuthenticationRequestResolver resolver) {
+		this.authenticationRequestResolver = resolver;
+		return this;
+	}
+
 	public Saml2ServiceProviderConfigurer serviceProviderRepository(Saml2ServiceProviderRepository sp) {
 		this.serviceProviderRepository = sp;
+		return this;
+	}
+
+	public Saml2ServiceProviderConfigurer authenticationEntryPoint(AuthenticationEntryPoint ep) {
+		this.entryPoint = ep;
 		return this;
 	}
 
@@ -64,13 +85,21 @@ public class Saml2ServiceProviderConfigurer
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			Saml2ServiceProviderRepository sp = getSharedObject(builder, Saml2ServiceProviderRepository.class,
-					() -> serviceProviderRepository, null);
+			serviceProviderRepository = getSharedObject(builder, Saml2ServiceProviderRepository.class,
+					() -> serviceProviderRepository, serviceProviderRepository);
+			authenticationProvider = new Saml2AuthenticationProvider(serviceProviderRepository);
+		}
+		builder.authenticationProvider(postProcess(authenticationProvider));
 
-			authenticationProvider = new Saml2AuthenticationProvider(sp);
+		if (entryPoint != null) {
+			registerDefaultAuthenticationEntryPoint(builder, entryPoint);
 		}
 
-		builder.authenticationProvider(postProcess(authenticationProvider));
+		authenticationRequestResolver = getSharedObject(builder,
+			Saml2AuthenticationRequestResolver.class,
+			() -> new DefaultSaml2AuthenticationRequestResolver(),
+			authenticationRequestResolver
+		);
 	}
 
 	@Override
@@ -80,6 +109,25 @@ public class Saml2ServiceProviderConfigurer
 		filter.setAuthenticationFailureHandler(failureHandler);
 		filter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
 		builder.addFilterAfter(filter, HeaderWriterFilter.class);
+		Filter loginPageFilter = getLoginPageGeneratingFilter();
+		builder.addFilterBefore(loginPageFilter, filter.getClass());
+		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
+			new AntPathRequestMatcher("/saml/sp/authenticate/*"),
+			serviceProviderRepository,
+			authenticationRequestResolver
+		);
+		builder.addFilterAfter(authenticationRequestFilter, loginPageFilter.getClass());
+	}
+
+	private Filter getLoginPageGeneratingFilter() {
+		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
+		Map<String,String> idps = new HashMap<>();
+		sp.getIdentityProviders()
+			.stream()
+			.forEach(p -> idps.put(p.getAlias(),"/saml/sp/authenticate/"+p.getAlias()));
+		return new Saml2LoginPageGeneratingFilter(
+			new AntPathRequestMatcher("/login"), idps
+		);
 	}
 
 	private <C> C getSharedObject(HttpSecurity http, Class<C> clazz) {
@@ -111,6 +159,18 @@ public class Saml2ServiceProviderConfigurer
 		}
 		setSharedObject(http, clazz, result);
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void registerDefaultAuthenticationEntryPoint(HttpSecurity http, AuthenticationEntryPoint entryPoint) {
+		ExceptionHandlingConfigurer<HttpSecurity> exceptionHandling =
+			http.getConfigurer(ExceptionHandlingConfigurer.class);
+
+		if (exceptionHandling == null) {
+			return;
+		}
+
+		exceptionHandling.authenticationEntryPoint(entryPoint);
 	}
 
 }

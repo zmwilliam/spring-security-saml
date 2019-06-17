@@ -29,6 +29,7 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedC
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.security.saml2.serviceprovider.servlet.filter.RequestUtils.getBasePath;
 import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
@@ -68,16 +69,5 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		}
 	}
 
-	private String getBasePath(HttpServletRequest request, boolean includeStandardPorts) {
-		boolean includePort = true;
-		if (443 == request.getServerPort() && "https".equals(request.getScheme())) {
-			includePort = includeStandardPorts;
-		}
-		else if (80 == request.getServerPort() && "http".equals(request.getScheme())) {
-			includePort = includeStandardPorts;
-		}
-		return request.getScheme() + "://" + request.getServerName()
-				+ (includePort ? (":" + request.getServerPort()) : "") + request.getContextPath();
-	}
 
 }

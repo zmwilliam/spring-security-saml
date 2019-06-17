@@ -17,6 +17,8 @@
 
 package boot.saml2.config;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceP
 import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
 
 import static java.util.Collections.emptyList;
-import static java.util.Optional.ofNullable;
+import static org.springframework.util.StringUtils.hasText;
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.saml2")
@@ -49,8 +51,12 @@ public class Saml2SampleBootConfiguration {
 	@Bean
 	public Saml2ServiceProviderRepository saml2ServiceProviderRegistrationRepository() {
 		final ServiceProvider provider = this.provider;
-		return eid -> new Saml2ServiceProviderRegistration(ofNullable(provider.getEntityId()).orElse(eid),
-				provider.getSaml2X509Credentials(), getIdentityProviders(provider.getIdentityProviders()));
+		return eid ->
+			new Saml2ServiceProviderRegistration(
+				hasText(provider.getEntityId()) ? provider.getEntityId() : eid,
+				provider.getSaml2X509Credentials(),
+				getIdentityProviders(provider.getIdentityProviders())
+			);
 	}
 
 	public void setServiceProvider(ServiceProvider provider) {
@@ -59,16 +65,19 @@ public class Saml2SampleBootConfiguration {
 
 	private List<Saml2IdentityProviderDetails> getIdentityProviders(List<IdentityProvider> identityProviders) {
 		return identityProviders.stream()
-				.map(p -> new Saml2IdentityProviderDetails(p.getEntityId(), p.getCertificates()))
+				.map(p -> new Saml2IdentityProviderDetails(
+					p.getEntityId(),
+					p.getAlias(),
+					p.getWebSsoUrlAsURI(),
+					p.getCertificates())
+				)
 				.collect(Collectors.toList());
 	}
 
 	public static class ServiceProvider {
 
 		private List<IdentityProvider> identityProviders = emptyList();
-
 		private String entityId;
-
 		private List<Saml2X509Credential> credentials = emptyList();
 
 		public List<IdentityProvider> getIdentityProviders() {
@@ -101,8 +110,9 @@ public class Saml2SampleBootConfiguration {
 	public static class IdentityProvider {
 
 		private String entityId;
-
 		private List<X509Certificate> certificates = emptyList();
+		private String alias;
+		private String webSsoUrl;
 
 		public String getEntityId() {
 			return entityId;
@@ -120,14 +130,37 @@ public class Saml2SampleBootConfiguration {
 			this.certificates = certificates;
 		}
 
+		public String getAlias() {
+			return alias;
+		}
+
+		public IdentityProvider setAlias(String alias) {
+			this.alias = alias;
+			return this;
+		}
+
+		public String getWebSsoUrl() {
+			return webSsoUrl;
+		}
+
+		public URI getWebSsoUrlAsURI() {
+			try {
+				return new URI(webSsoUrl);
+			} catch (URISyntaxException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
+		public IdentityProvider setWebSsoUrl(String webSsoUrl) {
+			this.webSsoUrl = webSsoUrl;
+			return this;
+		}
 	}
 
 	public static class StringX509Credential {
 
 		private String privateKey;
-
 		private String passphrase;
-
 		private String certificate;
 
 		public String getPrivateKey() {

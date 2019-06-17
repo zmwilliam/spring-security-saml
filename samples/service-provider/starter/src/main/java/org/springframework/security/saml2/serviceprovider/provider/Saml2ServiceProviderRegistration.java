@@ -22,6 +22,8 @@ import java.util.List;
 
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.KeyUsage.SIGNING;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.KeyUsage.SIGNING_AND_ENCRYPTION;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
@@ -63,6 +65,26 @@ public class Saml2ServiceProviderRegistration {
 
 	public List<Saml2IdentityProviderDetails> getIdentityProviders() {
 		return identityProviders;
+	}
+
+	public boolean hasSigningCredential() {
+		try {
+			getSigningCredential();
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
+	public Saml2X509Credential getSigningCredential() {
+		return getCredentials()
+			.stream()
+			.filter(
+				c -> c.getKeyUsage() == SIGNING ||
+				c.getKeyUsage() == SIGNING_AND_ENCRYPTION
+			)
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No signing key present"));
 	}
 
 }

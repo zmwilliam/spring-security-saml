@@ -41,6 +41,7 @@ import org.opensaml.security.x509.X509Support;
 import boot.saml2.config.Saml2SampleBootConfiguration.StringX509Credential;
 
 import static java.util.Optional.ofNullable;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.KeyUsage.SIGNING_AND_ENCRYPTION;
 
 @Configuration
 public class Saml2SampleBootConverters {
@@ -69,7 +70,7 @@ public class Saml2SampleBootConverters {
 		public Saml2X509Credential convert(StringX509Credential source) {
 			final PrivateKey privateKey = getPrivateKey(source.getPrivateKey(), source.getPassphrase());
 			final X509Certificate certificate = new X509CertificateConverter().convert(source.getCertificate());
-			return new Saml2X509Credential(privateKey, certificate);
+			return new Saml2X509Credential(privateKey, certificate, SIGNING_AND_ENCRYPTION);
 		}
 
 		private PrivateKey getPrivateKey(String key, String passphrase) {
