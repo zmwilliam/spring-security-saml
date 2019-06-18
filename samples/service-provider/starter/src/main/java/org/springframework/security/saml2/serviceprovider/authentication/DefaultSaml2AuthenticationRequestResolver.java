@@ -31,10 +31,11 @@ import org.opensaml.security.SecurityException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 
 import static org.springframework.security.saml2.serviceprovider.authentication.OpenSaml2Implementation.buildSAMLObject;
-import static org.springframework.security.saml2.serviceprovider.authentication.OpenSaml2Implementation.toXml;
 
 public class DefaultSaml2AuthenticationRequestResolver implements Saml2AuthenticationRequestResolver{
 	private final Clock clock = Clock.systemUTC();
+	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
+
 	@Override
 	public String resolveAuthenticationRequest(Saml2ServiceProviderRegistration sp, Saml2IdentityProviderDetails idp) {
 		AuthnRequest auth = buildSAMLObject(AuthnRequest.class);
@@ -48,7 +49,7 @@ public class DefaultSaml2AuthenticationRequestResolver implements Saml2Authentic
 		auth.setIssuer(issuer);
 		auth.setDestination(idp.getWebSsoUrl().toString());
 		try {
-			return toXml(auth, sp);
+			return saml.toXml(auth, sp);
 		} catch (MarshallingException | SignatureException | SecurityException e) {
 			throw new IllegalStateException(e);
 		}

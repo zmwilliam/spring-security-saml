@@ -68,11 +68,15 @@ import static org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getB
 
 final class OpenSaml2Implementation {
 
-	private static final BasicParserPool parserPool = new BasicParserPool();
+	private final BasicParserPool parserPool = new BasicParserPool();
 
-	private static final EncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver(
-			asList(new InlineEncryptedKeyResolver(), new EncryptedElementTypeEncryptedKeyResolver(),
-					new SimpleRetrievalMethodEncryptedKeyResolver()));
+	private final EncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver(
+			asList(
+				new InlineEncryptedKeyResolver(),
+				new EncryptedElementTypeEncryptedKeyResolver(),
+				new SimpleRetrievalMethodEncryptedKeyResolver()
+			)
+	);
 
 	OpenSaml2Implementation() {
 		bootstrap();
@@ -90,7 +94,7 @@ final class OpenSaml2Implementation {
 	 * ============================================================== PRIVATE METHODS
 	 * ==============================================================
 	 */
-	private static void bootstrap() {
+	private void bootstrap() {
 		// configure default values
 		// maxPoolSize = 5;
 		parserPool.setMaxPoolSize(50);
@@ -158,11 +162,11 @@ final class OpenSaml2Implementation {
 		throw new Saml2Exception("Deserialization not supported for given data set");
 	}
 
-	private static UnmarshallerFactory getUnmarshallerFactory() {
+	private UnmarshallerFactory getUnmarshallerFactory() {
 		return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 	}
 
-	private static XMLObject parse(byte[] xml) {
+	private XMLObject parse(byte[] xml) {
 		try {
 			Document document = parserPool.parse(new ByteArrayInputStream(xml));
 			Element element = document.getDocumentElement();
@@ -184,7 +188,7 @@ final class OpenSaml2Implementation {
 		}
 	}
 
-	private static Credential getSigningCredential(Saml2ServiceProviderRegistration sp) {
+	private Credential getSigningCredential(Saml2ServiceProviderRegistration sp) {
 		Saml2X509Credential credential = sp.getSigningCredential();
 		PublicKey publicKey = credential.getCertificate().getPublicKey();
 		final PrivateKey privateKey = credential.getPrivateKey();
@@ -194,7 +198,7 @@ final class OpenSaml2Implementation {
 		return cred;
 	}
 
-	private static void signXmlObject(SignableSAMLObject object, Saml2ServiceProviderRegistration sp)
+	private void signXmlObject(SignableSAMLObject object, Saml2ServiceProviderRegistration sp)
 		throws MarshallingException, SecurityException, SignatureException {
 		Credential credential = getSigningCredential(sp);
 		SignatureSigningParameters parameters = new SignatureSigningParameters();
@@ -205,7 +209,7 @@ final class OpenSaml2Implementation {
 		SignatureSupport.signObject(object, parameters);
 	}
 
-	static String toXml(XMLObject object, Saml2ServiceProviderRegistration sp)
+	String toXml(XMLObject object, Saml2ServiceProviderRegistration sp)
 		throws MarshallingException, SignatureException, SecurityException {
 		if (object instanceof SignableSAMLObject && sp.hasSigningCredential()) {
 			signXmlObject((SignableSAMLObject) object, sp);
