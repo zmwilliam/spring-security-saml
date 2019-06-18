@@ -85,6 +85,11 @@ final class OpenSaml2Implementation {
 	private OpenSaml2Implementation() {
 		bootstrap();
 	}
+	/*
+	 * ==============================================================
+	 * PUBLIC METHODS
+	 * ==============================================================
+	 */
 
 	XMLObject resolve(String xml) {
 		return resolve(xml.getBytes(StandardCharsets.UTF_8));
@@ -94,8 +99,19 @@ final class OpenSaml2Implementation {
 		return encryptedKeyResolver;
 	}
 
+	String toXml(XMLObject object, Saml2ServiceProviderRegistration sp)
+		throws MarshallingException, SignatureException, SecurityException {
+		if (object instanceof SignableSAMLObject && sp.hasSigningCredential()) {
+			signXmlObject((SignableSAMLObject) object, sp);
+		}
+		final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+		Element element = marshallerFactory.getMarshaller(object).marshall(object);
+		return SerializeSupport.nodeToString(element);
+	}
+
 	/*
-	 * ============================================================== PRIVATE METHODS
+	 * ==============================================================
+	 * PRIVATE METHODS
 	 * ==============================================================
 	 */
 	private void bootstrap() {
@@ -211,16 +227,6 @@ final class OpenSaml2Implementation {
 		parameters.setSignatureReferenceDigestMethod(SignatureConstants.ALGO_ID_DIGEST_SHA256);
 		parameters.setSignatureCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		SignatureSupport.signObject(object, parameters);
-	}
-
-	String toXml(XMLObject object, Saml2ServiceProviderRegistration sp)
-		throws MarshallingException, SignatureException, SecurityException {
-		if (object instanceof SignableSAMLObject && sp.hasSigningCredential()) {
-			signXmlObject((SignableSAMLObject) object, sp);
-		}
-		final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-		Element element = marshallerFactory.getMarshaller(object).marshall(object);
-		return SerializeSupport.nodeToString(element);
 	}
 
 }
