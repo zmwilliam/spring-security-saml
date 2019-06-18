@@ -87,7 +87,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private static Log logger = LogFactory.getLog(Saml2AuthenticationProvider.class);
 
-	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
+	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
 	private final Saml2ServiceProviderRepository serviceProviderRepository;
 

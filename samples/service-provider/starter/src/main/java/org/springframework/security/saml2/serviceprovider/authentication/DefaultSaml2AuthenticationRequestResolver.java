@@ -34,7 +34,7 @@ import static org.springframework.security.saml2.serviceprovider.authentication.
 
 public class DefaultSaml2AuthenticationRequestResolver implements Saml2AuthenticationRequestResolver{
 	private final Clock clock = Clock.systemUTC();
-	private final OpenSaml2Implementation saml = new OpenSaml2Implementation();
+	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
 	@Override
 	public String resolveAuthenticationRequest(Saml2ServiceProviderRegistration sp, Saml2IdentityProviderDetails idp) {
