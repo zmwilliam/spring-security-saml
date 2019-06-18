@@ -37,6 +37,7 @@ import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Au
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -51,7 +52,7 @@ public class Saml2ServiceProviderConfigurer
 
 	private AuthenticationProvider authenticationProvider;
 	private Saml2ServiceProviderRepository serviceProviderRepository;
-	private AuthenticationEntryPoint entryPoint;
+	private AuthenticationEntryPoint entryPoint = new LoginUrlAuthenticationEntryPoint("/login");
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
 	static {
@@ -85,8 +86,12 @@ public class Saml2ServiceProviderConfigurer
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
 		if (authenticationProvider == null) {
-			serviceProviderRepository = getSharedObject(builder, Saml2ServiceProviderRepository.class,
-					() -> serviceProviderRepository, serviceProviderRepository);
+			serviceProviderRepository = getSharedObject(
+				builder,
+				Saml2ServiceProviderRepository.class,
+				() -> serviceProviderRepository,
+				serviceProviderRepository
+			);
 			authenticationProvider = new Saml2AuthenticationProvider(serviceProviderRepository);
 		}
 		builder.authenticationProvider(postProcess(authenticationProvider));
@@ -104,31 +109,42 @@ public class Saml2ServiceProviderConfigurer
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
-		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
-		Saml2WebSsoAuthenticationFilter filter = new Saml2WebSsoAuthenticationFilter("/saml/sp/SSO/**");
-		filter.setAuthenticationFailureHandler(failureHandler);
-		filter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
-		builder.addFilterAfter(filter, HeaderWriterFilter.class);
-		Filter loginPageFilter = getLoginPageGeneratingFilter();
-		builder.addFilterBefore(loginPageFilter, filter.getClass());
+		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/**");
+		configureSaml2LoginPageFilter(builder, "/saml/sp/authenticate/", "/login");
+		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/*");
+	}
+
+	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
 		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
-			new AntPathRequestMatcher("/saml/sp/authenticate/*"),
+			new AntPathRequestMatcher(filterUrl),
 			serviceProviderRepository,
 			authenticationRequestResolver
 		);
-		builder.addFilterAfter(authenticationRequestFilter, loginPageFilter.getClass());
+		builder.addFilterAfter(authenticationRequestFilter, HeaderWriterFilter.class);
 	}
 
-	private Filter getLoginPageGeneratingFilter() {
+	protected void configureSaml2LoginPageFilter(HttpSecurity builder,
+												 String authRequestPrefixUrl,
+												 String loginFilterUrl) {
 		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
 		Map<String,String> idps = new HashMap<>();
 		sp.getIdentityProviders()
 			.stream()
-			.forEach(p -> idps.put(p.getAlias(),"/saml/sp/authenticate/"+p.getAlias()));
-		return new Saml2LoginPageGeneratingFilter(
-			new AntPathRequestMatcher("/login"), idps
+			.forEach(p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias()));
+		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(
+			new AntPathRequestMatcher(loginFilterUrl), idps
 		);
+		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
 	}
+
+	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder, String filterUrl) {
+		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
+		Saml2WebSsoAuthenticationFilter webSsoFilter = new Saml2WebSsoAuthenticationFilter(filterUrl);
+		webSsoFilter.setAuthenticationFailureHandler(failureHandler);
+		webSsoFilter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
+		builder.addFilterAfter(webSsoFilter, HeaderWriterFilter.class);
+	}
+
 
 	private <C> C getSharedObject(HttpSecurity http, Class<C> clazz) {
 		return http.getSharedObject(clazz);
