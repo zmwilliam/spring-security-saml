@@ -35,10 +35,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			)
 				.and()
 			.authorizeRequests()
-				.mvcMatchers("/", "/index", "/login").permitAll()
+				.mvcMatchers("/login", "/logged-out").permitAll()
 				.and()
 			.logout()
-				.logoutSuccessUrl("/")
+				.logoutSuccessUrl("/logged-out")
 				.and()
 		;
 		//@formatter:on

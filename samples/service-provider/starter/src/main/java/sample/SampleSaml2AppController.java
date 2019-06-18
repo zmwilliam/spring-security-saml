@@ -37,14 +37,18 @@ public class SampleSaml2AppController {
 		return "logged-in";
 	}
 
-	@RequestMapping(value = { "/", "/index" })
+	public String loggedOut() {
+		return "local-logout";
+	}
+
+	@RequestMapping(value = { "/", "/index", "/logged-out" })
 	public String landingPage() {
 		logger.info("Sample SP Application - Landing Page");
 		if (isLoggedIn()) {
 			return loggedIn();
 		}
 		else {
-			return "index";
+			return loggedOut();
 		}
 	}
 
