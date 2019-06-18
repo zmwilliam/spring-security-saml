@@ -29,7 +29,7 @@ import static org.springframework.util.Assert.notNull;
  * Line: 584, Section 4.3 Credentials Used for both signing and encryption/decryption
  */
 public class Saml2X509Credential {
-	public	 enum KeyUsage {
+	public enum KeyUsage {
 		SIGNING,
 		ENCRYPTION,
 		SIGNING_AND_ENCRYPTION
