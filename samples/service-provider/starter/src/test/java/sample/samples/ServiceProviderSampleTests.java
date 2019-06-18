@@ -65,10 +65,13 @@ import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static sample.samples.SAML2ActionTestingSupport.buildConditions;
@@ -99,6 +102,22 @@ public class ServiceProviderSampleTests {
 	@BeforeAll
 	public static void initializeBouncyCastle() {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	}
+
+	@Test
+	@DisplayName("redirect to login page")
+	void redirectToLoginPage() throws Exception {
+		mockMvc.perform(get("http://localhost:8080/sample-sp/some/url").contextPath("/sample-sp"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("http://localhost:8080/sample-sp/login"));
+	}
+
+	@Test
+	@DisplayName("receive AuthNRequest")
+	void testAuthNRequest() throws Exception {
+		mockMvc.perform(get("http://localhost:8080/sample-sp/saml/sp/authenticate/simplesamlphp").contextPath("/sample-sp"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(header().string("Location", startsWith("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?SAMLRequest=")));
 	}
 
 	@Test
