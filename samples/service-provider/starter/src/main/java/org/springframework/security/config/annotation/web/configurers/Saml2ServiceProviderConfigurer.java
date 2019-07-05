@@ -30,6 +30,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
@@ -127,10 +129,15 @@ public class Saml2ServiceProviderConfigurer
 												 String authRequestPrefixUrl,
 												 String loginFilterUrl) {
 		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
+		Saml2IdentityProviderDetailsRepository idpRepo =
+			serviceProviderRepository.getIdentityProviders(sp.getEntityId());
 		Map<String,String> idps = new HashMap<>();
-		sp.getIdentityProviders()
-			.stream()
-			.forEach(p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias()));
+		if (idpRepo instanceof Iterable) {
+			Iterable<Saml2IdentityProviderDetails> repo = (Iterable<Saml2IdentityProviderDetails>) idpRepo;
+			repo.forEach(
+				p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias())
+			);
+		}
 		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(
 			new AntPathRequestMatcher(loginFilterUrl), idps
 		);

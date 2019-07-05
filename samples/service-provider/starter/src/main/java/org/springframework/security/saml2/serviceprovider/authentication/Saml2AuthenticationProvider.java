@@ -158,7 +158,9 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 		final String issuer = samlResponse.getIssuer().getValue();
 		logger.debug("Processing SAML response from " + issuer);
-		final Saml2IdentityProviderDetails idp = sp.getIdentityProvider(issuer);
+		final Saml2IdentityProviderDetails idp = serviceProviderRepository
+			.getIdentityProviders(sp.getEntityId())
+			.getIdentityProviderById(issuer);
 		if (idp == null) {
 			throw new ProviderNotFoundException(format("SAML 2 Provider for %s was not found.", issuer));
 		}

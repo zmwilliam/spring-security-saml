@@ -28,7 +28,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
+import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 
@@ -51,12 +53,22 @@ public class Saml2SampleBootConfiguration {
 	@Bean
 	public Saml2ServiceProviderRepository saml2ServiceProviderRegistrationRepository() {
 		final ServiceProvider provider = this.provider;
-		return eid ->
-			new Saml2ServiceProviderRegistration(
-				hasText(provider.getEntityId()) ? provider.getEntityId() : eid,
-				provider.getSaml2X509Credentials(),
-				getIdentityProviders(provider.getIdentityProviders())
-			);
+		InMemorySaml2IdentityProviderDetailsRepository idpRepo =
+			new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(provider.getIdentityProviders()));
+		return new Saml2ServiceProviderRepository() {
+			@Override
+			public Saml2ServiceProviderRegistration getServiceProvider(String serviceProviderEntityId) {
+				return new Saml2ServiceProviderRegistration(
+					hasText(provider.getEntityId()) ? provider.getEntityId() : serviceProviderEntityId,
+					provider.getSaml2X509Credentials()
+				);
+			}
+
+			@Override
+			public Saml2IdentityProviderDetailsRepository getIdentityProviders(String serviceProviderEntityId) {
+				return idpRepo;
+			}
+		};
 	}
 
 	public void setServiceProvider(ServiceProvider provider) {

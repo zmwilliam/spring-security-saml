@@ -96,7 +96,6 @@ public class ServiceProviderSampleTests {
 	@EnableAutoConfiguration
 	@ComponentScan(basePackages = "sample")
 	public static class SpringBootApplicationTestConfig {
-
 	}
 
 	@BeforeAll

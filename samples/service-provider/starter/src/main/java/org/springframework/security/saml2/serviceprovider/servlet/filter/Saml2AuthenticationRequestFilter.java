@@ -87,11 +87,7 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 	}
 
 	private Saml2IdentityProviderDetails getIdentityProvider(Saml2ServiceProviderRegistration sp, String alias) {
-		return sp.getIdentityProviders()
-			.stream()
-			.filter(p -> alias.equals(p.getAlias()))
-			.findFirst()
-			.orElseThrow(() -> new IllegalArgumentException("Unable to resolve IDP:"+alias));
+		return serviceProviderRepository.getIdentityProviders(sp.getEntityId()).getIdentityProviderByAlias(alias);
 	}
 
 	private String getIdpAlias(HttpServletRequest request) {

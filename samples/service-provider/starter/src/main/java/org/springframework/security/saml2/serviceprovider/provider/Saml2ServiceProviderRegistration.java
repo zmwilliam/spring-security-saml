@@ -33,22 +33,16 @@ import static org.springframework.util.Assert.notNull;
 public class Saml2ServiceProviderRegistration {
 
 	private final String entityId;
-
 	private final List<Saml2X509Credential> credentials = new LinkedList<>();
 
-	private final List<Saml2IdentityProviderDetails> identityProviders = new LinkedList<>();
-
-	public Saml2ServiceProviderRegistration(String entityId, List<Saml2X509Credential> credentials,
-			List<Saml2IdentityProviderDetails> identityProviders) {
+	public Saml2ServiceProviderRegistration(String entityId, List<Saml2X509Credential> credentials) {
 		notEmpty(credentials, "at least one private key and certificate is required for signed and encrypted messages");
 		credentials.stream().forEach(c -> {
 			notNull(c.getPrivateKey(), "private key required in all credentials");
 			notNull(c.getCertificate(), "certificate required in all credentials");
 		});
-		notEmpty(identityProviders, "at least one identity provider should be configured for the service provider");
 		this.entityId = entityId;
 		this.credentials.addAll(credentials);
-		this.identityProviders.addAll(identityProviders);
 	}
 
 	public List<Saml2X509Credential> getCredentials() {
@@ -57,14 +51,6 @@ public class Saml2ServiceProviderRegistration {
 
 	public String getEntityId() {
 		return entityId;
-	}
-
-	public Saml2IdentityProviderDetails getIdentityProvider(String entityId) {
-		return identityProviders.stream().filter(idp -> entityId.equals(idp.getEntityId())).findFirst().orElse(null);
-	}
-
-	public List<Saml2IdentityProviderDetails> getIdentityProviders() {
-		return identityProviders;
 	}
 
 	public boolean hasSigningCredential() {
