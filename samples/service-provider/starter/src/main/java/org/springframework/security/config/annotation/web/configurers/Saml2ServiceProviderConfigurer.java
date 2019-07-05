@@ -18,6 +18,7 @@
 package org.springframework.security.config.annotation.web.configurers;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.servlet.Filter;
@@ -54,7 +55,7 @@ public class Saml2ServiceProviderConfigurer
 
 	private AuthenticationProvider authenticationProvider;
 	private Saml2ServiceProviderRepository serviceProviderRepository;
-	private AuthenticationEntryPoint entryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+	private AuthenticationEntryPoint entryPoint = null;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
 	static {
@@ -87,19 +88,38 @@ public class Saml2ServiceProviderConfigurer
 		builder.authorizeRequests().mvcMatchers("/saml/sp/**").permitAll().anyRequest().authenticated();
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
+		serviceProviderRepository = getSharedObject(
+			builder,
+			Saml2ServiceProviderRepository.class,
+			() -> serviceProviderRepository,
+			serviceProviderRepository
+		);
+
 		if (authenticationProvider == null) {
-			serviceProviderRepository = getSharedObject(
-				builder,
-				Saml2ServiceProviderRepository.class,
-				() -> serviceProviderRepository,
-				serviceProviderRepository
-			);
 			authenticationProvider = new Saml2AuthenticationProvider(serviceProviderRepository);
 		}
 		builder.authenticationProvider(postProcess(authenticationProvider));
 
 		if (entryPoint != null) {
 			registerDefaultAuthenticationEntryPoint(builder, entryPoint);
+		} else {
+			final Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
+			final Saml2IdentityProviderDetailsRepository idps =
+				serviceProviderRepository.getIdentityProviders(sp.getEntityId());
+			String alias = null;
+			if (idps instanceof Iterable) {
+				Iterator<Saml2IdentityProviderDetails> it = ((Iterable<Saml2IdentityProviderDetails>) idps).iterator();
+				int count = 0;
+				while (it.hasNext() && count<2) {
+					count++;
+					alias = it.next().getAlias();
+				}
+				if (count>1) {
+					alias = null;
+				}
+			}
+			String loginUrl = (alias==null) ? "/login" : "/saml/sp/authenticate/"+alias;
+			registerDefaultAuthenticationEntryPoint(builder, new LoginUrlAuthenticationEntryPoint(loginUrl));
 		}
 
 		authenticationRequestResolver = getSharedObject(builder,

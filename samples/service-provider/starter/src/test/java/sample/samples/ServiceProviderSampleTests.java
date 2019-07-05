@@ -16,6 +16,7 @@
  */
 package sample.samples;
 
+import java.net.URI;
 import java.security.KeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -27,8 +28,12 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
+import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -64,8 +69,11 @@ import org.opensaml.xmlsec.signature.support.SignatureSupport;
 import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -104,11 +112,11 @@ public class ServiceProviderSampleTests {
 	}
 
 	@Test
-	@DisplayName("redirect to login page")
-	void redirectToLoginPage() throws Exception {
+	@DisplayName("redirect to login page when having a single identity provider")
+	void redirectToLoginPageSingleProvider() throws Exception {
 		mockMvc.perform(get("http://localhost:8080/sample-sp/some/url").contextPath("/sample-sp"))
 			.andExpect(status().is3xxRedirection())
-			.andExpect(redirectedUrl("http://localhost:8080/sample-sp/login"));
+			.andExpect(redirectedUrl("http://localhost:8080/sample-sp/saml/sp/authenticate/simplesamlphp"));
 	}
 
 	@Test
