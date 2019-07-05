@@ -28,9 +28,9 @@ import org.springframework.security.saml2.serviceprovider.authentication.Saml2Au
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -38,7 +38,6 @@ import org.springframework.web.util.UriUtils;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.RequestUtils.getBasePath;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
-import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 
@@ -90,16 +89,14 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 		return serviceProviderRepository.getIdentityProviders(sp.getEntityId()).getIdentityProviderByAlias(alias);
 	}
 
+
 	private String getIdpAlias(HttpServletRequest request) {
-		String path = request.getRequestURI().substring(request.getContextPath().length());
-		if (!hasText(path)) {
-			return null;
+		final AntPathRequestMatcher matcher = new AntPathRequestMatcher("/saml/sp/authenticate/{alias}");
+		if (matcher.matches(request)) {
+			return matcher.extractUriTemplateVariables(request).get("alias");
 		}
-		String[] paths = StringUtils.tokenizeToStringArray(path, "/");
-		if (paths.length < 4) {
-			return null;
-		}
-		return paths[3];
+		return null;
+
 	}
 
 }
