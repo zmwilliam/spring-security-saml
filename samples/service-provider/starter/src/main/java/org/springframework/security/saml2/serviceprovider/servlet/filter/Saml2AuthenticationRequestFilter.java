@@ -32,10 +32,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.RequestUtils.getBasePath;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
 
@@ -72,7 +72,9 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 			logger.debug("Creating SAML2 SP Authentication Request for IDP[" + alias + "]");
 		}
 		Assert.hasText(alias, "IDP Alias must be present and valid");
-		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(getBasePath(request, false));
+		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(
+			ServletUriComponentsBuilder.fromContextPath(request).build().toUriString()
+		);
 		Saml2IdentityProviderDetails idp = getIdentityProvider(sp, alias);
 		String xml = authenticationRequestResolver.resolveAuthenticationRequest(sp, idp);
 		String encoded = encode(deflate(xml));

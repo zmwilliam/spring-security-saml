@@ -27,9 +27,9 @@ import org.springframework.security.saml2.serviceprovider.authentication.Saml2Au
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.RequestUtils.getBasePath;
 import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
@@ -55,8 +55,11 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
-		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(responseXml,
-				request.getRequestURL().toString(), getBasePath(request, false));
+		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
+			responseXml,
+			request.getRequestURL().toString(),
+			ServletUriComponentsBuilder.fromContextPath(request).build().toUriString()
+		);
 		return getAuthenticationManager().authenticate(authentication);
 	}
 
