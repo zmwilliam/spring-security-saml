@@ -68,7 +68,9 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 										   HttpServletResponse response) throws IOException {
 		String relayState = request.getParameter("RelayState");
 		String alias = getIdpAlias(request);
-		logger.debug("Creating SAML2 SP Authentication Request for IDP["+alias+"]");
+		if (logger.isDebugEnabled()) {
+			logger.debug("Creating SAML2 SP Authentication Request for IDP[" + alias + "]");
+		}
 		Assert.hasText(alias, "IDP Alias must be present and valid");
 		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(getBasePath(request, false));
 		Saml2IdentityProviderDetails idp = getIdentityProvider(sp, alias);
@@ -81,7 +83,9 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 			.build(true)
 			.toUriString();
 		response.sendRedirect(redirect);
-		logger.debug("SAML2 SP Authentication Request Sent to Browser");
+		if (logger.isDebugEnabled()) {
+			logger.debug("SAML2 SP Authentication Request Sent to Browser");
+		}
 
 	}
 

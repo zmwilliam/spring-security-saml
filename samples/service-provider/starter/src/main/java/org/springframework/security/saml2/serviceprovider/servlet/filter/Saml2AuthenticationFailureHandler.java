@@ -44,7 +44,9 @@ public class Saml2AuthenticationFailureHandler implements AuthenticationFailureH
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException, ServletException {
-		logger.debug("Processing SAML2 Authentication Exception", exception);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Processing SAML2 Authentication Exception", exception);
+		}
 		sendHtmlBody(response, errorHtml(Collections.singletonList(exception.getMessage())));
 	}
 

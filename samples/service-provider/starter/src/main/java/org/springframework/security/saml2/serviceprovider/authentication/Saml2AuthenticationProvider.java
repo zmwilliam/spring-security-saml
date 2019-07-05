@@ -157,7 +157,9 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		}
 
 		final String issuer = samlResponse.getIssuer().getValue();
-		logger.debug("Processing SAML response from " + issuer);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Processing SAML response from " + issuer);
+		}
 		final Saml2IdentityProviderDetails idp = serviceProviderRepository
 			.getIdentityProviders(sp.getEntityId())
 			.getIdentityProviderById(issuer);
@@ -211,7 +213,9 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		}
 
 		if (signatureRequired && !hasValidSignature(a, idp)) {
-			logger.debug(format("Assertion [%s] does not a valid signature.", a.getID()));
+			if (logger.isDebugEnabled()) {
+				logger.debug(format("Assertion [%s] does not a valid signature.", a.getID()));
+			}
 			return false;
 		}
 		a.setSignature(null);
@@ -222,13 +226,18 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 			final ValidationResult result = validator.validate(a, vctx);
 			final boolean valid = result.equals(ValidationResult.VALID);
 			if (!valid) {
-				logger.debug(format("Failed to validate assertion from %s with user %s", idp.getEntityId(),
-						getUsername(sp, a)));
+				if (logger.isDebugEnabled()) {
+					logger.debug(format("Failed to validate assertion from %s with user %s", idp.getEntityId(),
+						getUsername(sp, a)
+					));
+				}
 			}
 			return valid;
 		}
 		catch (AssertionValidationException e) {
-			logger.debug("Failed to validate assertion:", e);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Failed to validate assertion:", e);
+			}
 			return false;
 		}
 
