@@ -18,7 +18,6 @@
 package org.springframework.security.saml2.serviceprovider.servlet.filter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +33,6 @@ import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
@@ -80,9 +78,10 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 		String encoded = encode(deflate(xml));
 		String redirect = UriComponentsBuilder
 			.fromUri(idp.getWebSsoUrl())
-			.queryParam("SAMLRequest", UriUtils.encode(encoded, StandardCharsets.ISO_8859_1))
-			.queryParam("RelayState", UriUtils.encode(relayState, StandardCharsets.ISO_8859_1))
-			.build(true)
+			.queryParam("SAMLRequest", encoded)
+			.queryParam("RelayState", relayState)
+			.build(false)
+			.encode()
 			.toUriString();
 		response.sendRedirect(redirect);
 		if (logger.isDebugEnabled()) {

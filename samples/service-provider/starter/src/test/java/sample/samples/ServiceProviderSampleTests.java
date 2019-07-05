@@ -64,11 +64,13 @@ import org.opensaml.xmlsec.signature.support.SignatureSupport;
 import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -115,6 +117,19 @@ public class ServiceProviderSampleTests {
 		mockMvc.perform(get("http://localhost:8080/sample-sp/saml/sp/authenticate/simplesamlphp").contextPath("/sample-sp"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(header().string("Location", startsWith("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?SAMLRequest=")));
+	}
+
+	@Test
+	@DisplayName("receive AuthNRequest")
+	void testRelayState() throws Exception {
+		mockMvc.perform(
+			get("http://localhost:8080/sample-sp/saml/sp/authenticate/simplesamlphp")
+				.contextPath("/sample-sp")
+				.param("RelayState", "relay state value with spaces")
+		)
+			.andExpect(status().is3xxRedirection())
+			.andExpect(header().string("Location", startsWith("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/SSOService.php?SAMLRequest=")))
+			.andExpect(header().string("Location", containsString("RelayState=relay%20state%20value%20with%20spaces")));
 	}
 
 	@Test
