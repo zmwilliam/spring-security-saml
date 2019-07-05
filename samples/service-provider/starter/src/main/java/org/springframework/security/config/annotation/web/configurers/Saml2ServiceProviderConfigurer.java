@@ -35,12 +35,13 @@ import org.springframework.security.saml2.serviceprovider.provider.Saml2Identity
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationFailureHandler;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -165,7 +166,8 @@ public class Saml2ServiceProviderConfigurer
 	}
 
 	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder, String filterUrl) {
-		Saml2AuthenticationFailureHandler failureHandler = new Saml2AuthenticationFailureHandler();
+		AuthenticationFailureHandler failureHandler =
+			new SimpleUrlAuthenticationFailureHandler("/login?error=saml2-error");
 		Saml2WebSsoAuthenticationFilter webSsoFilter = new Saml2WebSsoAuthenticationFilter(filterUrl);
 		webSsoFilter.setAuthenticationFailureHandler(failureHandler);
 		webSsoFilter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));

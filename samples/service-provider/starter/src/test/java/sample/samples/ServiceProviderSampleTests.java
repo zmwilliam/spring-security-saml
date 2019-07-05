@@ -16,7 +16,6 @@
  */
 package sample.samples;
 
-import java.net.URI;
 import java.security.KeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -28,12 +27,8 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
-import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -69,16 +64,11 @@ import org.opensaml.xmlsec.signature.support.SignatureSupport;
 import org.w3c.dom.Element;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -165,10 +155,11 @@ public class ServiceProviderSampleTests {
 		Response response = buildResponse(assertion);
 		String xml = toXml(response);
 		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
-				.andExpect(status().is4xxClientError()).andExpect(unauthenticated())
-				.andExpect(content().string(containsString("Unable to find a valid assertion")));
+			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+			.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sample-sp/login?error=saml2-error"))
+			.andExpect(unauthenticated());
 	}
 
 	@Test
