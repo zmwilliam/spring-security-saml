@@ -31,7 +31,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,6 +64,16 @@ public class ServiceProviderMultipleIdpsTests {
 		mockMvc.perform(get("http://localhost:8080/sample-sp/some/url").contextPath("/sample-sp"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("http://localhost:8080/sample-sp/login"));
+	}
+
+	@Test
+	@DisplayName("displays multiple providers on the login page")
+	void loginPage() throws Exception {
+		mockMvc.perform(get("http://localhost:8080/sample-sp/login").contextPath("/sample-sp"))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString(">simplesamlphp<")))
+			.andExpect(content().string(containsString(">simplesamlphp2<")))
+		;
 	}
 
 }
