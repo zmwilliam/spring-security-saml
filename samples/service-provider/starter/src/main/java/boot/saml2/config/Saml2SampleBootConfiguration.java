@@ -58,6 +58,7 @@ public class Saml2SampleBootConfiguration {
 		return new Saml2ServiceProviderRepository() {
 			@Override
 			public Saml2ServiceProviderRegistration getServiceProvider(String serviceProviderEntityId) {
+				//singleton implementation, always return the same one
 				return new Saml2ServiceProviderRegistration(
 					hasText(provider.getEntityId()) ? provider.getEntityId() : serviceProviderEntityId,
 					provider.getSaml2X509Credentials()

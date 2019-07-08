@@ -20,7 +20,20 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 
+/**
+ * Component that generates an AuthenticationRequest, <code>samlp:AuthnRequestType</code> as defined by
+ * https://www.oasis-open.org/committees/download.php/35711/sstc-saml-core-errata-2.0-wd-06-diff.pdf
+ * Page 50, Line 2147
+ */
 public interface Saml2AuthenticationRequestResolver {
+	/**
+	 * Creates an authentication request from the Service Provider, sp,
+	 * to the Identity Provider, idp.
+	 * The authentication result is an XML string that may be signed, encrypted, both or neither.
+	 * @param sp - the service provider that wishes to receive an assertion
+	 * @param idp - the identity provider, the recipient of this authentication request
+	 * @return XML data in the format of a String. This data may be signed, encrypted, both signed and encrypted or neither signed and encrypted
+	 */
 	String resolveAuthenticationRequest(Saml2ServiceProviderRegistration sp,
 										Saml2IdentityProviderDetails idp);
 }

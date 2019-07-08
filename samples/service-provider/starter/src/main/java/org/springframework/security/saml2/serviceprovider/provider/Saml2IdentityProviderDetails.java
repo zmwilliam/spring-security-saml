@@ -26,7 +26,7 @@ import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
 /**
- * Configuration object that represents an external identity provider
+ * Configuration object that represents an external identity provider paired with a local service provider
  */
 public class Saml2IdentityProviderDetails {
 

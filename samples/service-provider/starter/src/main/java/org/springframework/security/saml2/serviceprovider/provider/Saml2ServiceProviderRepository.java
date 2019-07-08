@@ -17,10 +17,26 @@
 
 package org.springframework.security.saml2.serviceprovider.provider;
 
+/**
+ * Resolver of a locally configured service provider and remotely paired identity providers.
+ */
 public interface Saml2ServiceProviderRepository {
 
+	/**
+	 * Resolves a locally configured Service Provider, SP, based on a given entity ID
+	 * A <code>null</code> value may be passed in to resolve the default provider
+	 * @param serviceProviderEntityId - a unique entity ID for the local provider, or <code>null</code> to retrieve the
+	 *                                default service provider
+	 * @return a configured Service Provider, or null if none is found
+	 */
 	Saml2ServiceProviderRegistration getServiceProvider(String serviceProviderEntityId);
 
+	/**
+	 * Returns an indexed repository for configured identity providers for a locally configured service provider.
+	 * @param serviceProviderEntityId a unique entity ID for the local provider, or <code>null</code> to retrieve the
+	 * 	 *                            default service provider
+	 * @return a repository containing the identity provider
+	 */
 	Saml2IdentityProviderDetailsRepository getIdentityProviders(String serviceProviderEntityId);
 
 }

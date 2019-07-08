@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.util.Assert;
+
 import static java.util.Arrays.asList;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
@@ -45,12 +47,14 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails getIdentityProviderById(String id) {
-		return byId.get(id);
+	public Saml2IdentityProviderDetails getIdentityProviderById(String entityId) {
+		Assert.notNull(entityId, "entityId must not be null");
+		return byId.get(entityId);
 	}
 
 	@Override
 	public Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias) {
+		Assert.notNull(alias, "alias must not be null");
 		return byAlias.get(alias);
 	}
 
