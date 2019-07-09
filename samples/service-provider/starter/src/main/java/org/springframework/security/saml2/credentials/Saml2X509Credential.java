@@ -19,7 +19,11 @@ package org.springframework.security.saml2.credentials;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import static java.util.Arrays.asList;
+import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
 /**
@@ -29,23 +33,28 @@ import static org.springframework.util.Assert.notNull;
  * Line: 584, Section 4.3 Credentials Used for both signing and encryption/decryption
  */
 public class Saml2X509Credential {
-	public enum KeyUsage {
-		SIGNING,
+	public enum Saml2X509CredentialUsage {
+		VERIFICATION,
 		ENCRYPTION,
-		SIGNING_AND_ENCRYPTION
+		SIGNING,
+		DECRYPTION,
 	}
 
 	private final PrivateKey privateKey;
 	private final X509Certificate certificate;
-	private final KeyUsage keyUsage;
+	private final Set<Saml2X509CredentialUsage> saml2X509CredentialUsage;
 
 	public Saml2X509Credential(PrivateKey privateKey,
 							   X509Certificate certificate,
-							   KeyUsage usage) {
-		notNull(certificate, "certificate is required");
+							   Saml2X509CredentialUsage... usages) {
+		notNull(certificate, "certificate is always required");
+		notEmpty(usages, "credentials usages cannot be empty");
 		this.privateKey = privateKey;
 		this.certificate = certificate;
-		this.keyUsage = usage;
+		this.saml2X509CredentialUsage = new LinkedHashSet<>(asList(usages));
+		if (isSigningCredential() || isDecryptionCredential()) {
+			notNull(privateKey, "private key is required for signing and decryption credentials");
+		}
 	}
 
 	public PrivateKey getPrivateKey() {
@@ -56,7 +65,23 @@ public class Saml2X509Credential {
 		return certificate;
 	}
 
-	public KeyUsage getKeyUsage() {
-		return keyUsage;
+	public Set<Saml2X509CredentialUsage> getSaml2X509CredentialUsages() {
+		return saml2X509CredentialUsage;
+	}
+
+	public boolean isSigningCredential() {
+		return getSaml2X509CredentialUsages().contains(Saml2X509CredentialUsage.SIGNING);
+	}
+
+	public boolean isSignatureVerficationCredential() {
+		return getSaml2X509CredentialUsages().contains(Saml2X509CredentialUsage.VERIFICATION);
+	}
+
+	public boolean isEncryptionCredential() {
+		return getSaml2X509CredentialUsages().contains(Saml2X509CredentialUsage.ENCRYPTION);
+	}
+
+	public boolean isDecryptionCredential() {
+		return getSaml2X509CredentialUsages().contains(Saml2X509CredentialUsage.DECRYPTION);
 	}
 }

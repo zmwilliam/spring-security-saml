@@ -21,7 +21,6 @@ import java.time.Clock;
 import java.util.UUID;
 
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
 
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
@@ -37,7 +36,7 @@ public class DefaultSaml2AuthenticationRequestResolver implements Saml2Authentic
 	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
 	@Override
-	public String resolveAuthenticationRequest(Saml2ServiceProviderRegistration sp, Saml2IdentityProviderDetails idp) {
+	public String resolveAuthenticationRequest(Saml2IdentityProviderDetails idp) {
 		AuthnRequest auth = buildSAMLObject(AuthnRequest.class);
 		auth.setID("ARQ" + UUID.randomUUID().toString().substring(1));
 		auth.setIssueInstant(new DateTime(clock.millis()));
@@ -45,11 +44,11 @@ public class DefaultSaml2AuthenticationRequestResolver implements Saml2Authentic
 		auth.setIsPassive(Boolean.FALSE);
 		auth.setProtocolBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect");
 		Issuer issuer = buildSAMLObject(Issuer.class);
-		issuer.setValue(sp.getEntityId());
+		issuer.setValue(idp.getLocalSpEntityId());
 		auth.setIssuer(issuer);
 		auth.setDestination(idp.getWebSsoUrl().toString());
 		try {
-			return saml.toXml(auth, sp);
+			return saml.toXml(auth, idp);
 		} catch (MarshallingException | SignatureException | SecurityException e) {
 			throw new IllegalStateException(e);
 		}

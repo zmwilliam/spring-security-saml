@@ -18,44 +18,60 @@
 package org.springframework.security.saml2.serviceprovider.provider;
 
 import java.net.URI;
-import java.security.cert.X509Certificate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
+import org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage;
+
+import static java.util.Arrays.asList;
 import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
 /**
- * Configuration object that represents an external identity provider paired with a local service provider
+ * Configuration object that represents an external identity provider paired with the local service provider
  */
 public class Saml2IdentityProviderDetails {
 
 	private final String entityId;
 	private final String alias;
 	private final URI webSsoUrl;
-	private final List<X509Certificate> verificationCredentials;
+	private final List<Saml2X509Credential> credentials;
+	private String localSpEntityId;
 
-	public Saml2IdentityProviderDetails(String entityId,
+	public Saml2IdentityProviderDetails(String idpEntityId,
 										String alias,
-										URI webSsoUrl,
-										List<X509Certificate> verificationCredentials) {
-		hasText(entityId, "entityId is required");
-		hasText(entityId, "alias is required");
-		notEmpty(verificationCredentials, "verification credentials are required");
-		notNull(webSsoUrl, "webSsoUrl is required");
-		verificationCredentials.stream().forEach(c -> notNull(c, "verification credentials cannot be null"));
-		this.entityId = entityId;
+										URI idpWebSsoUri,
+										List<Saml2X509Credential> credentials,
+										String localSpEntityId) {
+		hasText(idpEntityId, "idpEntityId is required");
+		hasText(idpEntityId, "alias is required");
+		notEmpty(credentials, "credentials are required");
+		notNull(idpWebSsoUri, "idpWebSsoUri is required");
+		credentials.stream().forEach(c -> notNull(c, "credentials cannot contain null elements"));
+		this.entityId = idpEntityId;
 		this.alias = alias;
-		this.verificationCredentials = verificationCredentials;
-		this.webSsoUrl = webSsoUrl;
+		this.credentials = credentials;
+		this.webSsoUrl = idpWebSsoUri;
+		this.localSpEntityId = localSpEntityId;
 	}
 
 	public String getEntityId() {
 		return entityId;
 	}
 
-	public List<X509Certificate> getVerificationCredentials() {
-		return verificationCredentials;
+	public List<Saml2X509Credential> getCredentialsForUsage(Saml2X509CredentialUsage... types) {
+		if (types == null || types.length == 0) {
+			return credentials;
+		}
+		Set<Saml2X509CredentialUsage> typeset = new HashSet<>(asList(types));
+		return credentials
+			.stream()
+			.filter(c -> containsCredentialForTypes(c.getSaml2X509CredentialUsages(), typeset))
+			.collect(Collectors.toList());
 	}
 
 	public String getAlias() {
@@ -64,5 +80,19 @@ public class Saml2IdentityProviderDetails {
 
 	public URI getWebSsoUrl() {
 		return webSsoUrl;
+	}
+
+	public String getLocalSpEntityId() {
+		return localSpEntityId;
+	}
+
+	private boolean containsCredentialForTypes(Set<Saml2X509CredentialUsage> existing,
+											   Set<Saml2X509CredentialUsage> requested) {
+		for (Saml2X509CredentialUsage u : requested) {
+			if (existing.contains(u)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

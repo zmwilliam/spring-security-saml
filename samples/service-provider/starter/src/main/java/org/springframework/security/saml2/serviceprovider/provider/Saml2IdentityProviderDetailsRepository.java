@@ -7,16 +7,17 @@ public interface Saml2IdentityProviderDetailsRepository {
 
 	/**
 	 * Resolves an entity provider by entityId
-	 * @param entityId - unique entityId, not null
+	 * @param idpEntityId - unique entityId for the remote identity provider, not null
+	 * @param localSpEntityId - entityId of the local application, not null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails getIdentityProviderById(String entityId);
+	Saml2IdentityProviderDetails getIdentityProviderByEntityId(String idpEntityId, String localSpEntityId);
 
 	/**
 	 * Resolves an entity provider by entityId
 	 * @param alias - unique alias, not null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias);
+	Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias, String localSpEntityId);
 
 }

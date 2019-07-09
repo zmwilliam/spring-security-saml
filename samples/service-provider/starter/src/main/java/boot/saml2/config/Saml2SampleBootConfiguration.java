@@ -20,6 +20,7 @@ package boot.saml2.config;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,16 +32,15 @@ import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 
 import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
 
 import static java.util.Collections.emptyList;
-import static org.springframework.util.StringUtils.hasText;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.ENCRYPTION;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.VERIFICATION;
 
 @Configuration
-@ConfigurationProperties(prefix = "spring.security.saml2")
+@ConfigurationProperties(prefix = "spring.security.saml2.login")
 @Import(Saml2SampleBootConverters.class)
 public class Saml2SampleBootConfiguration {
 
@@ -48,99 +48,77 @@ public class Saml2SampleBootConfiguration {
 		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
-	private ServiceProvider provider;
+	private List<IdentityProvider> providers;
 
 	@Bean
-	public Saml2ServiceProviderRepository saml2ServiceProviderRegistrationRepository() {
-		final ServiceProvider provider = this.provider;
+	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
 		InMemorySaml2IdentityProviderDetailsRepository idpRepo =
-			new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(provider.getIdentityProviders()));
-		return new Saml2ServiceProviderRepository() {
-			@Override
-			public Saml2ServiceProviderRegistration getServiceProvider(String serviceProviderEntityId) {
-				//singleton implementation, always return the same one
-				return new Saml2ServiceProviderRegistration(
-					hasText(provider.getEntityId()) ? provider.getEntityId() : serviceProviderEntityId,
-					provider.getSaml2X509Credentials()
-				);
-			}
-
-			@Override
-			public Saml2IdentityProviderDetailsRepository getIdentityProviders(String serviceProviderEntityId) {
-				return idpRepo;
-			}
-		};
+			new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(providers));
+		return idpRepo;
 	}
 
-	public void setServiceProvider(ServiceProvider provider) {
-		this.provider = provider;
+	public void setIdentityProviders(List<IdentityProvider> providers) {
+		this.providers = providers;
 	}
 
 	private List<Saml2IdentityProviderDetails> getIdentityProviders(List<IdentityProvider> identityProviders) {
 		return identityProviders.stream()
-				.map(p -> new Saml2IdentityProviderDetails(
-					p.getEntityId(),
-					p.getAlias(),
-					p.getWebSsoUrlAsURI(),
-					p.getCertificates())
+				.map(
+					p -> new Saml2IdentityProviderDetails(
+						p.getEntityId(),
+						p.getAlias(),
+						p.getWebSsoUrlAsURI(),
+						p.getProviderCredentials(),
+						p.getLocalEntityId()
+					)
 				)
 				.collect(Collectors.toList());
-	}
-
-	public static class ServiceProvider {
-
-		private List<IdentityProvider> identityProviders = emptyList();
-		private String entityId;
-		private List<Saml2X509Credential> credentials = emptyList();
-
-		public List<IdentityProvider> getIdentityProviders() {
-			return identityProviders;
-		}
-
-		public void setIdentityProviders(List<IdentityProvider> identityProviders) {
-			this.identityProviders = identityProviders;
-		}
-
-		public String getEntityId() {
-			return entityId;
-		}
-
-		public void setEntityId(String entityId) {
-			this.entityId = entityId;
-		}
-
-		public List<Saml2X509Credential> getSaml2X509Credentials() {
-			return credentials;
-		}
-
-		public void setCredentials(List<StringX509Credential> credentials) {
-			final Saml2X509CredentialConverter converter = new Saml2X509CredentialConverter();
-			this.credentials = credentials.stream().map(c -> converter.convert(c)).collect(Collectors.toList());
-		}
-
 	}
 
 	public static class IdentityProvider {
 
 		private String entityId;
-		private List<X509Certificate> certificates = emptyList();
+		private List<Saml2X509Credential> signingCredentials = emptyList();
+		private List<X509Certificate> verificationCredentials = emptyList();
 		private String alias;
 		private String webSsoUrl;
+		private String localEntityId;
 
 		public String getEntityId() {
 			return entityId;
+		}
+
+		public String getLocalEntityId() {
+			return localEntityId;
 		}
 
 		public void setEntityId(String entityId) {
 			this.entityId = entityId;
 		}
 
-		public List<X509Certificate> getCertificates() {
-			return certificates;
+		public List<Saml2X509Credential> getSigningCredentials() {
+			return signingCredentials;
 		}
 
-		public void setCertificates(List<X509Certificate> certificates) {
-			this.certificates = certificates;
+		public void setSigningCredentials(List<StringX509Credential> credentials) {
+			final Saml2X509CredentialConverter converter = new Saml2X509CredentialConverter();
+			this.signingCredentials = credentials.stream().map(c -> converter.convert(c)).collect(Collectors.toList());
+		}
+
+		public void setVerificationCredentials(List<X509Certificate> credentials) {
+			this.verificationCredentials = new LinkedList<>(credentials);
+		}
+
+		public List<X509Certificate> getVerificationCredentials() {
+			return verificationCredentials;
+		}
+
+		public List<Saml2X509Credential> getProviderCredentials() {
+			LinkedList<Saml2X509Credential> result = new LinkedList<>(getSigningCredentials());
+			for (X509Certificate c : getVerificationCredentials()) {
+				result.add(new Saml2X509Credential(null, c, ENCRYPTION, VERIFICATION));
+			}
+			return result;
 		}
 
 		public String getAlias() {
@@ -167,6 +145,10 @@ public class Saml2SampleBootConfiguration {
 		public IdentityProvider setWebSsoUrl(String webSsoUrl) {
 			this.webSsoUrl = webSsoUrl;
 			return this;
+		}
+
+		public void setLocalEntityId(String localEntityId) {
+			this.localEntityId = localEntityId;
 		}
 	}
 

@@ -27,7 +27,7 @@ import javax.xml.namespace.QName;
 
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
@@ -65,6 +65,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getBuilderFactory;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
 
 final class OpenSaml2Implementation {
 	private static OpenSaml2Implementation instance = new OpenSaml2Implementation();
@@ -99,14 +100,18 @@ final class OpenSaml2Implementation {
 		return encryptedKeyResolver;
 	}
 
-	String toXml(XMLObject object, Saml2ServiceProviderRegistration sp)
+	String toXml(XMLObject object, Saml2IdentityProviderDetails idp)
 		throws MarshallingException, SignatureException, SecurityException {
-		if (object instanceof SignableSAMLObject && sp.hasSigningCredential()) {
-			signXmlObject((SignableSAMLObject) object, sp);
+		if (object instanceof SignableSAMLObject && hasSigningCredential(idp)) {
+			signXmlObject((SignableSAMLObject) object, idp);
 		}
 		final MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 		Element element = marshallerFactory.getMarshaller(object).marshall(object);
 		return SerializeSupport.nodeToString(element);
+	}
+
+	private boolean hasSigningCredential(Saml2IdentityProviderDetails idp) {
+		return !idp.getCredentialsForUsage(SIGNING).isEmpty();
 	}
 
 	/*
@@ -208,19 +213,22 @@ final class OpenSaml2Implementation {
 		}
 	}
 
-	private Credential getSigningCredential(Saml2ServiceProviderRegistration sp) {
-		Saml2X509Credential credential = sp.getSigningCredential();
+	private Credential getSigningCredential(Saml2IdentityProviderDetails idp) {
+		Saml2X509Credential credential = idp.getCredentialsForUsage(SIGNING)
+			.stream()
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("no signing credential configured"));
 		PublicKey publicKey = credential.getCertificate().getPublicKey();
 		final PrivateKey privateKey = credential.getPrivateKey();
 		BasicCredential cred = CredentialSupport.getSimpleCredential(publicKey, privateKey);
 		cred.setUsageType(UsageType.SIGNING);
-		cred.setEntityId(sp.getEntityId());
+		cred.setEntityId(idp.getLocalSpEntityId());
 		return cred;
 	}
 
-	private void signXmlObject(SignableSAMLObject object, Saml2ServiceProviderRegistration sp)
+	private void signXmlObject(SignableSAMLObject object, Saml2IdentityProviderDetails idp)
 		throws MarshallingException, SecurityException, SignatureException {
-		Credential credential = getSigningCredential(sp);
+		Credential credential = getSigningCredential(idp);
 		SignatureSigningParameters parameters = new SignatureSigningParameters();
 		parameters.setSigningCredential(credential);
 		parameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);

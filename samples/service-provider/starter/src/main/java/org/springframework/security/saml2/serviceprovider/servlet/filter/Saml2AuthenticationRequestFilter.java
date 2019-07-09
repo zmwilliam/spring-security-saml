@@ -25,8 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -40,14 +39,14 @@ import static org.springframework.security.saml2.serviceprovider.servlet.filter.
 public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 
 	private final RequestMatcher matcher;
-	private final Saml2ServiceProviderRepository serviceProviderRepository;
+	private final Saml2IdentityProviderDetailsRepository providerRepository;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
 	public Saml2AuthenticationRequestFilter(RequestMatcher matcher,
-											Saml2ServiceProviderRepository serviceProviderRepository,
+											Saml2IdentityProviderDetailsRepository providerRepository,
 											Saml2AuthenticationRequestResolver authenticationRequestResolver) {
 		this.matcher = matcher;
-		this.serviceProviderRepository = serviceProviderRepository;
+		this.providerRepository = providerRepository;
 		this.authenticationRequestResolver = authenticationRequestResolver;
 	}
 
@@ -70,11 +69,10 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 			logger.debug("Creating SAML2 SP Authentication Request for IDP[" + alias + "]");
 		}
 		Assert.hasText(alias, "IDP Alias must be present and valid");
-		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(
-			ServletUriComponentsBuilder.fromContextPath(request).build().toUriString()
-		);
-		Saml2IdentityProviderDetails idp = getIdentityProvider(sp, alias);
-		String xml = authenticationRequestResolver.resolveAuthenticationRequest(sp, idp);
+		String localSpEntityId = ServletUriComponentsBuilder.fromContextPath(request).build().toUriString();
+
+		Saml2IdentityProviderDetails idp = providerRepository.getIdentityProviderByAlias(alias, localSpEntityId);
+		String xml = authenticationRequestResolver.resolveAuthenticationRequest(idp);
 		String encoded = encode(deflate(xml));
 		String redirect = UriComponentsBuilder
 			.fromUri(idp.getWebSsoUrl())
@@ -89,11 +87,6 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 		}
 
 	}
-
-	private Saml2IdentityProviderDetails getIdentityProvider(Saml2ServiceProviderRegistration sp, String alias) {
-		return serviceProviderRepository.getIdentityProviders(sp.getEntityId()).getIdentityProviderByAlias(alias);
-	}
-
 
 	private String getIdpAlias(HttpServletRequest request) {
 		final AntPathRequestMatcher matcher = new AntPathRequestMatcher("/saml/sp/authenticate/{alias}");

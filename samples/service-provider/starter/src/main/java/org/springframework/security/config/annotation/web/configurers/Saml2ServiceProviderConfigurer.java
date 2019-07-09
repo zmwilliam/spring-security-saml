@@ -33,8 +33,6 @@ import org.springframework.security.saml2.serviceprovider.authentication.Saml2Au
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2ServiceProviderRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -55,7 +53,7 @@ public class Saml2ServiceProviderConfigurer
 	}
 
 	private AuthenticationProvider authenticationProvider;
-	private Saml2ServiceProviderRepository serviceProviderRepository;
+	private Saml2IdentityProviderDetailsRepository providerDetailsRepository;
 	private AuthenticationEntryPoint entryPoint = null;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
@@ -73,8 +71,8 @@ public class Saml2ServiceProviderConfigurer
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer serviceProviderRepository(Saml2ServiceProviderRepository sp) {
-		this.serviceProviderRepository = sp;
+	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2IdentityProviderDetailsRepository repo) {
+		this.providerDetailsRepository = repo;
 		return this;
 	}
 
@@ -89,24 +87,22 @@ public class Saml2ServiceProviderConfigurer
 		builder.authorizeRequests().mvcMatchers("/saml/sp/**").permitAll().anyRequest().authenticated();
 		builder.csrf().ignoringAntMatchers("/saml/sp/**");
 
-		serviceProviderRepository = getSharedObject(
+		providerDetailsRepository = getSharedObject(
 			builder,
-			Saml2ServiceProviderRepository.class,
-			() -> serviceProviderRepository,
-			serviceProviderRepository
+			Saml2IdentityProviderDetailsRepository.class,
+			() -> providerDetailsRepository,
+			providerDetailsRepository
 		);
 
 		if (authenticationProvider == null) {
-			authenticationProvider = new Saml2AuthenticationProvider(serviceProviderRepository);
+			authenticationProvider = new Saml2AuthenticationProvider(providerDetailsRepository);
 		}
 		builder.authenticationProvider(postProcess(authenticationProvider));
 
 		if (entryPoint != null) {
 			registerDefaultAuthenticationEntryPoint(builder, entryPoint);
 		} else {
-			final Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
-			final Saml2IdentityProviderDetailsRepository idps =
-				serviceProviderRepository.getIdentityProviders(sp.getEntityId());
+			final Saml2IdentityProviderDetailsRepository idps = providerDetailsRepository;
 			String alias = null;
 			if (idps instanceof Iterable) {
 				Iterator<Saml2IdentityProviderDetails> it = ((Iterable<Saml2IdentityProviderDetails>) idps).iterator();
@@ -140,7 +136,7 @@ public class Saml2ServiceProviderConfigurer
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
 		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
 			new AntPathRequestMatcher(filterUrl),
-			serviceProviderRepository,
+			providerDetailsRepository,
 			authenticationRequestResolver
 		);
 		builder.addFilterAfter(authenticationRequestFilter, HeaderWriterFilter.class);
@@ -149,9 +145,7 @@ public class Saml2ServiceProviderConfigurer
 	protected void configureSaml2LoginPageFilter(HttpSecurity builder,
 												 String authRequestPrefixUrl,
 												 String loginFilterUrl) {
-		Saml2ServiceProviderRegistration sp = serviceProviderRepository.getServiceProvider(null);
-		Saml2IdentityProviderDetailsRepository idpRepo =
-			serviceProviderRepository.getIdentityProviders(sp.getEntityId());
+		Saml2IdentityProviderDetailsRepository idpRepo = providerDetailsRepository;
 		Map<String,String> idps = new HashMap<>();
 		if (idpRepo instanceof Iterable) {
 			Iterable<Saml2IdentityProviderDetails> repo = (Iterable<Saml2IdentityProviderDetails>) idpRepo;

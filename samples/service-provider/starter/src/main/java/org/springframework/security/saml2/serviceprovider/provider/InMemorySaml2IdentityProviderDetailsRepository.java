@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import static java.util.Arrays.asList;
 import static org.springframework.util.Assert.notEmpty;
@@ -47,15 +48,27 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails getIdentityProviderById(String entityId) {
+	public Saml2IdentityProviderDetails getIdentityProviderByEntityId(String entityId, String localSpEntityId) {
 		Assert.notNull(entityId, "entityId must not be null");
-		return byId.get(entityId);
+		final Saml2IdentityProviderDetails idp = byId.get(entityId);
+		if (StringUtils.hasText(idp.getLocalSpEntityId())) {
+			return idp;
+		}
+		else {
+			return withLocalSpEntityId(localSpEntityId, idp);
+		}
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias) {
+	public Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias, String localSpEntityId) {
 		Assert.notNull(alias, "alias must not be null");
-		return byAlias.get(alias);
+		final Saml2IdentityProviderDetails idp = byAlias.get(alias);
+		if (StringUtils.hasText(idp.getLocalSpEntityId())) {
+			return idp;
+		}
+		else {
+			return withLocalSpEntityId(localSpEntityId, idp);
+		}
 	}
 
 	@Override
@@ -63,8 +76,21 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 		return byId.values().iterator();
 	}
 
+	private Saml2IdentityProviderDetails withLocalSpEntityId(String localSpEntityId, Saml2IdentityProviderDetails idp) {
+		return new Saml2IdentityProviderDetails(
+			idp.getEntityId(),
+			idp.getAlias(),
+			idp.getWebSsoUrl(),
+			idp.getCredentialsForUsage(),
+			localSpEntityId
+		);
+	}
+
 	private static Map<String, Saml2IdentityProviderDetails> createMappingToIdentityProvider(
-			Collection<Saml2IdentityProviderDetails> idps, Function<Saml2IdentityProviderDetails, String> mapper) {
+			Collection<Saml2IdentityProviderDetails> idps,
+			Function<Saml2IdentityProviderDetails,
+			String> mapper
+	) {
 		return Collections.unmodifiableMap(
 			idps.stream()
 				.peek(idp -> notNull(idp, "identity providers cannot contain null values"))
