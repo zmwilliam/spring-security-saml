@@ -124,10 +124,10 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 		Saml2IdentityProviderDetails idp = providerRepository.getIdentityProviderByEntityId(
 			samlResponse.getIssuer().getValue(),
-			token.getDerivedServiceProviderEntityId()
+			token.getApplicationUri()
 		);
 
-		Assertion assertion = validateSaml2Response(idp, token.getRecipientUrl(), samlResponse);
+		Assertion assertion = validateSaml2Response(idp, token.getRecipientUri(), samlResponse);
 		final String username = getUsername(idp, assertion);
 		if (username == null) {
 			throw new UsernameNotFoundException("Assertion [" + assertion.getID() + "] is missing a user identifier");
