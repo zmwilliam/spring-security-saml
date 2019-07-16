@@ -95,7 +95,7 @@ public class Saml2ServiceProviderConfigurer
 		);
 
 		if (authenticationProvider == null) {
-			authenticationProvider = new Saml2AuthenticationProvider(providerDetailsRepository);
+			authenticationProvider = new Saml2AuthenticationProvider();
 		}
 		builder.authenticationProvider(postProcess(authenticationProvider));
 
@@ -128,7 +128,7 @@ public class Saml2ServiceProviderConfigurer
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
-		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/**");
+		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/{alias}/**");
 		configureSaml2LoginPageFilter(builder, "/saml/sp/authenticate/", "/login");
 		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/*");
 	}
@@ -159,10 +159,12 @@ public class Saml2ServiceProviderConfigurer
 		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
 	}
 
-	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder, String filterUrl) {
+	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder,
+															String filterUrl) {
 		AuthenticationFailureHandler failureHandler =
 			new SimpleUrlAuthenticationFailureHandler("/login?error=saml2-error");
-		Saml2WebSsoAuthenticationFilter webSsoFilter = new Saml2WebSsoAuthenticationFilter(filterUrl);
+		Saml2WebSsoAuthenticationFilter webSsoFilter =
+			new Saml2WebSsoAuthenticationFilter(filterUrl, providerDetailsRepository);
 		webSsoFilter.setAuthenticationFailureHandler(failureHandler);
 		webSsoFilter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
 		builder.addFilterAfter(webSsoFilter, HeaderWriterFilter.class);

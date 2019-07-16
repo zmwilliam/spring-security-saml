@@ -40,7 +40,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -91,16 +90,9 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 
 	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
-	private final Saml2IdentityProviderDetailsRepository providerRepository;
-
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 
 	private int responseTimeValidationSkewMillis = 1000 * 60 * 5; // 5 minutes
-
-	public Saml2AuthenticationProvider(Saml2IdentityProviderDetailsRepository providerRepository) {
-		notNull(providerRepository, "provider repository must not be null");
-		this.providerRepository = providerRepository;
-	}
 
 	public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
 		notNull(authoritiesMapper, "authoritiesMapper must not be null");
@@ -122,10 +114,7 @@ public class Saml2AuthenticationProvider implements AuthenticationProvider {
 		String xml = token.getSaml2Response();
 		Response samlResponse = getSaml2Response(xml);
 
-		Saml2IdentityProviderDetails idp = providerRepository.getIdentityProviderByEntityId(
-			samlResponse.getIssuer().getValue(),
-			token.getApplicationUri()
-		);
+		Saml2IdentityProviderDetails idp = token.getIdentityProvider();
 
 		Assertion assertion = validateSaml2Response(idp, token.getRecipientUri(), samlResponse);
 		final String username = getUsername(idp, assertion);

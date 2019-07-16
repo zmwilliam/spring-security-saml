@@ -18,18 +18,21 @@
 package org.springframework.security.saml2.serviceprovider.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 
 public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 
 	private final String saml2Response;
 	private final String recipientUri;
-	private final String applicationUri;
+	private final Saml2IdentityProviderDetails identityProvider;
 
-	public Saml2AuthenticationToken(String saml2Response, String recipientUri, String applicationUri) {
+	public Saml2AuthenticationToken(String saml2Response,
+									String recipientUri,
+									Saml2IdentityProviderDetails identityProvider) {
 		super(null);
 		this.saml2Response = saml2Response;
 		this.recipientUri = recipientUri;
-		this.applicationUri = applicationUri;
+		this.identityProvider = identityProvider;
 	}
 
 	@Override
@@ -50,8 +53,8 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 		return recipientUri;
 	}
 
-	public String getApplicationUri() {
-		return applicationUri;
+	public Saml2IdentityProviderDetails getIdentityProvider() {
+		return identityProvider;
 	}
 
 	@Override

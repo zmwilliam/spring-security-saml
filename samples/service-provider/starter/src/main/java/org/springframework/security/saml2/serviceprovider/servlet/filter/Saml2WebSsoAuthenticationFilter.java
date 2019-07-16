@@ -24,18 +24,29 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.getApplicationUri;
+import static org.springframework.util.Assert.state;
 import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
-	public Saml2WebSsoAuthenticationFilter(String filterProcessUrl) {
-		super(filterProcessUrl);
+	private final AntPathRequestMatcher aliasMatcher;
+	private final Saml2IdentityProviderDetailsRepository identityProviderRepository;
+
+	public Saml2WebSsoAuthenticationFilter(String filterProcessesUrl,
+										   Saml2IdentityProviderDetailsRepository identityProviderRepository) {
+		super(filterProcessesUrl);
+		state(filterProcessesUrl.contains("{alias}"), "filterProcessUrl must contain an {alias} matcher parameter");
+		this.identityProviderRepository = identityProviderRepository;
+		this.aliasMatcher = new AntPathRequestMatcher(filterProcessesUrl);
 		setAllowSessionCreation(true);
 		setSessionAuthenticationStrategy(new ChangeSessionIdAuthenticationStrategy());
 	}
@@ -55,12 +66,23 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
+		Saml2IdentityProviderDetails idp = identityProviderRepository.getIdentityProviderByAlias(
+			getIdpAlias(request),
+			getApplicationUri(request)
+		);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
 			responseXml,
 			request.getRequestURL().toString(),
-			getApplicationUri(request)
+			idp
 		);
 		return getAuthenticationManager().authenticate(authentication);
+	}
+
+	private String getIdpAlias(HttpServletRequest request) {
+		if (aliasMatcher.matches(request)) {
+			return aliasMatcher.extractUriTemplateVariables(request).get("alias");
+		}
+		return null;
 	}
 
 	private String deflateIfRequired(HttpServletRequest request, byte[] b) {

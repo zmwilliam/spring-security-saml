@@ -70,7 +70,12 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 
 	private Saml2IdentityProviderDetails withLocalSpEntityId(Saml2IdentityProviderRegistration idp,
 															 String requestUri) {
-		String localSpEntityId = inferEntityId(idp.getLocalSpEntityIdTemplate(), requestUri);
+		String localSpEntityId = inferEntityId(
+			idp.getLocalSpEntityIdTemplate(),
+			requestUri,
+			idp.getEntityId(),
+			idp.getAlias()
+		);
 		return new Saml2IdentityProviderDetails(
 			idp.getEntityId(),
 			idp.getAlias(),
@@ -97,9 +102,15 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 		);
 	}
 
-	private static String inferEntityId(String template, String url) {
-		Map<String, String> uriVariables = new HashMap<>();
+	private static String inferEntityId(String template,
+										String url,
+										String entityId,
+										String alias) {
+		if (!StringUtils.hasText(template)) {
+			return url;
+		}
 
+		Map<String, String> uriVariables = new HashMap<>();
 		UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(url)
 			.replaceQuery(null)
 			.fragment(null)
@@ -119,6 +130,8 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 		}
 		uriVariables.put("basePath", path == null ? "" : path);
 		uriVariables.put("baseUrl", uriComponents.toUriString());
+		uriVariables.put("entityId", StringUtils.hasText(entityId) ? entityId : "");
+		uriVariables.put("alias", StringUtils.hasText(alias) ? alias : "");
 
 		return UriComponentsBuilder.fromUriString(template)
 			.buildAndExpand(uriVariables)

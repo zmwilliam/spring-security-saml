@@ -70,7 +70,6 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -140,7 +139,7 @@ public class ServiceProviderSampleTests {
 		Response response = buildResponse(assertion);
 		signXmlObject(response, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
-		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 				.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
@@ -156,7 +155,7 @@ public class ServiceProviderSampleTests {
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
 		final ResultActions actions = mockMvc
-				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
@@ -169,7 +168,7 @@ public class ServiceProviderSampleTests {
 		Assertion assertion = buildAssertion("testuser@spring.security.saml");
 		Response response = buildResponse(assertion);
 		String xml = toXml(response);
-		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+		mockMvc.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 			.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 			.andExpect(status().is3xxRedirection())
@@ -188,7 +187,7 @@ public class ServiceProviderSampleTests {
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
 		final ResultActions actions = mockMvc
-				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
@@ -205,7 +204,7 @@ public class ServiceProviderSampleTests {
 		Response response = buildResponse(encryptedAssertion);
 		String xml = toXml(response);
 		final ResultActions actions = mockMvc
-				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
@@ -225,7 +224,7 @@ public class ServiceProviderSampleTests {
 		signXmlObject(assertion, getSigningCredential(idpCertificate, idpPrivateKey, UsageType.SIGNING));
 		String xml = toXml(response);
 		final ResultActions actions = mockMvc
-				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost").contextPath("/sample-sp")
+				.perform(post("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp").contextPath("/sample-sp")
 						.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 						.param("SAMLResponse", Saml2TestUtils.encode(xml.getBytes(UTF_8))))
 				.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/sample-sp/"))
@@ -247,7 +246,7 @@ public class ServiceProviderSampleTests {
 	private Response buildResponse() {
 		Response response = SAML2ActionTestingSupport.buildResponse();
 		response.setID("_" + UUID.randomUUID().toString());
-		response.setDestination("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
+		response.setDestination("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp");
 		response.setIssuer(buildIssuer("http://simplesaml-for-spring-saml.cfapps.io/saml2/idp/metadata.php"));
 		return response;
 	}
@@ -265,7 +264,7 @@ public class ServiceProviderSampleTests {
 		// as appropriate
 		subjectConfirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
 		final SubjectConfirmationData confirmationData = buildSubjectConfirmationData(LOCAL_SP_ENTITY_ID);
-		confirmationData.setRecipient("http://localhost:8080/sample-sp/saml/sp/SSO/alias/localhost");
+		confirmationData.setRecipient("http://localhost:8080/sample-sp/saml/sp/SSO/simplesamlphp");
 		subjectConfirmation.setSubjectConfirmationData(confirmationData);
 		assertion.getSubject().getSubjectConfirmations().add(subjectConfirmation);
 		return assertion;

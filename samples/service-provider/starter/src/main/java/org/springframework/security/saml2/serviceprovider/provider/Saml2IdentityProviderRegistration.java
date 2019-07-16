@@ -33,7 +33,7 @@ public class Saml2IdentityProviderRegistration {
 	private String alias;
 	private URI webSsoUrl;
 	private List<Saml2X509Credential> credentials;
-	private String localSpEntityIdTemplate = "{baseUrl}";
+	private String localSpEntityIdTemplate = "{baseUrl}/saml/sp/metadata/{alias}";
 
 	public Saml2IdentityProviderRegistration() {
 	}
@@ -47,7 +47,7 @@ public class Saml2IdentityProviderRegistration {
 		this.alias = alias;
 		this.credentials = credentials;
 		this.webSsoUrl = idpWebSsoUri;
-		this.localSpEntityIdTemplate = ofNullable(localSpEntityIdTemplate).orElse("{baseUrl}");
+		this.localSpEntityIdTemplate = ofNullable(localSpEntityIdTemplate).orElse(this.localSpEntityIdTemplate);
 	}
 
 	public String getEntityId() {
