@@ -69,7 +69,7 @@ public class Saml2SampleBootConfiguration {
 						p.getAlias(),
 						p.getWebSsoUrlAsURI(),
 						p.getProviderCredentials(),
-						p.getLocalEntityId()
+						p.getLocalSpEntityIdTemplate()
 					)
 				)
 				.collect(Collectors.toList());
@@ -82,14 +82,14 @@ public class Saml2SampleBootConfiguration {
 		private List<X509Certificate> verificationCredentials = emptyList();
 		private String alias;
 		private String webSsoUrl;
-		private String localEntityId;
+		private String localSpEntityIdTemplate;
 
 		public String getEntityId() {
 			return entityId;
 		}
 
-		public String getLocalEntityId() {
-			return localEntityId;
+		public String getLocalSpEntityIdTemplate() {
+			return localSpEntityIdTemplate;
 		}
 
 		public void setEntityId(String entityId) {
@@ -147,8 +147,8 @@ public class Saml2SampleBootConfiguration {
 			return this;
 		}
 
-		public void setLocalEntityId(String localEntityId) {
-			this.localEntityId = localEntityId;
+		public void setLocalSpEntityIdTemplate(String localSpEntityIdTemplate) {
+			this.localSpEntityIdTemplate = localSpEntityIdTemplate;
 		}
 	}
 
