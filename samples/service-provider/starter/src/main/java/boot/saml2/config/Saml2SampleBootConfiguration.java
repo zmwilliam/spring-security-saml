@@ -30,8 +30,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderRegistration;
 
 import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
 
@@ -61,10 +61,10 @@ public class Saml2SampleBootConfiguration {
 		this.providers = providers;
 	}
 
-	private List<Saml2IdentityProviderDetails> getIdentityProviders(List<IdentityProvider> identityProviders) {
+	private List<Saml2IdentityProviderRegistration> getIdentityProviders(List<IdentityProvider> identityProviders) {
 		return identityProviders.stream()
 				.map(
-					p -> new Saml2IdentityProviderDetails(
+					p -> new Saml2IdentityProviderRegistration(
 						p.getEntityId(),
 						p.getAlias(),
 						p.getWebSsoUrlAsURI(),

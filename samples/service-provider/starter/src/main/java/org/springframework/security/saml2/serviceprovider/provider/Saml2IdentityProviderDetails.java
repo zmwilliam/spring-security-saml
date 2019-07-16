@@ -31,24 +31,22 @@ import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
-/**
- * Configuration object that represents an external identity provider paired with the local service provider
- */
 public class Saml2IdentityProviderDetails {
 
 	private final String entityId;
 	private final String alias;
 	private final URI webSsoUrl;
 	private final List<Saml2X509Credential> credentials;
-	private String localSpEntityId;
+	private final String localSpEntityId;
 
-	public Saml2IdentityProviderDetails(String idpEntityId,
-										String alias,
-										URI idpWebSsoUri,
-										List<Saml2X509Credential> credentials,
-										String localSpEntityId) {
+	protected Saml2IdentityProviderDetails(String idpEntityId,
+										   String alias,
+										   URI idpWebSsoUri,
+										   List<Saml2X509Credential> credentials,
+										   String localSpEntityId) {
 		hasText(idpEntityId, "idpEntityId is required");
-		hasText(idpEntityId, "alias is required");
+		hasText(alias, "alias is required");
+		hasText(localSpEntityId, "localSpEntityId is required");
 		notEmpty(credentials, "credentials are required");
 		notNull(idpWebSsoUri, "idpWebSsoUri is required");
 		credentials.stream().forEach(c -> notNull(c, "credentials cannot contain null elements"));
