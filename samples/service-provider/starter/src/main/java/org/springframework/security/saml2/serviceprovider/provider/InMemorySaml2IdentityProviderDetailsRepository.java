@@ -52,15 +52,15 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails getIdentityProviderByEntityId(String entityId, String spRequestUri) {
+	public Saml2IdentityProviderDetails getIdentityProviderByEntityId(String entityId, String applicationUri) {
 		Assert.notNull(entityId, "entityId must not be null");
-		return withLocalSpEntityId(byId.get(entityId), spRequestUri);
+		return withLocalSpEntityId(byId.get(entityId), applicationUri);
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias, String spRequestUri) {
+	public Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias, String applicationUri) {
 		Assert.notNull(alias, "alias must not be null");
-		return withLocalSpEntityId(byAlias.get(alias), spRequestUri);
+		return withLocalSpEntityId(byAlias.get(alias), applicationUri);
 	}
 
 	@Override
