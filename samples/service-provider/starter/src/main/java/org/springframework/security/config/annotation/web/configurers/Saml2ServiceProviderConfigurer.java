@@ -128,8 +128,8 @@ public class Saml2ServiceProviderConfigurer
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
-		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/{alias}/**");
 		configureSaml2LoginPageFilter(builder, "/saml/sp/authenticate/", "/login");
+		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/{alias}/**");
 		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/{alias}/**");
 	}
 
