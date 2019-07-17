@@ -130,12 +130,12 @@ public class Saml2ServiceProviderConfigurer
 	public void configure(HttpSecurity builder) throws Exception {
 		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/{alias}/**");
 		configureSaml2LoginPageFilter(builder, "/saml/sp/authenticate/", "/login");
-		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/*");
+		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/{alias}/**");
 	}
 
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
 		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
-			new AntPathRequestMatcher(filterUrl),
+			filterUrl,
 			providerDetailsRepository,
 			authenticationRequestResolver
 		);

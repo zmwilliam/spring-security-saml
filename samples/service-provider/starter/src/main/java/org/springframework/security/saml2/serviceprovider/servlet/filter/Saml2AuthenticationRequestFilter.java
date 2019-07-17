@@ -28,7 +28,6 @@ import org.springframework.security.saml2.serviceprovider.authentication.Saml2Au
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -37,17 +36,19 @@ import org.springframework.web.util.UriUtils;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.getApplicationUri;
+import static org.springframework.util.Assert.state;
 
 public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 
-	private final RequestMatcher matcher;
+	private final AntPathRequestMatcher matcher;
 	private final Saml2IdentityProviderDetailsRepository providerRepository;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
-	public Saml2AuthenticationRequestFilter(RequestMatcher matcher,
+	public Saml2AuthenticationRequestFilter(String filterProcessesUrl,
 											Saml2IdentityProviderDetailsRepository providerRepository,
 											Saml2AuthenticationRequestResolver authenticationRequestResolver) {
-		this.matcher = matcher;
+		state(filterProcessesUrl.contains("{alias}"), "filterProcessUrl must contain an {alias} matcher parameter");
+		this.matcher = new AntPathRequestMatcher(filterProcessesUrl);
 		this.providerRepository = providerRepository;
 		this.authenticationRequestResolver = authenticationRequestResolver;
 	}
@@ -90,7 +91,6 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 	}
 
 	private String getIdpAlias(HttpServletRequest request) {
-		final AntPathRequestMatcher matcher = new AntPathRequestMatcher("/saml/sp/authenticate/{alias}");
 		if (matcher.matches(request)) {
 			return matcher.extractUriTemplateVariables(request).get("alias");
 		}
