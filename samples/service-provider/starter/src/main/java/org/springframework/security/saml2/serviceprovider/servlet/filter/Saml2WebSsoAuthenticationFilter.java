@@ -21,13 +21,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedCredentialsNotFoundException;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -60,7 +60,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException {
 		if (!requiresAuthentication(request, response)) {
-			throw new PreAuthenticatedCredentialsNotFoundException("Missing SAML2 response data");
+			throw new BadCredentialsException("Missing SAML2 response data");
 		}
 		String saml2Response = request.getParameter("SAMLResponse");
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
