@@ -26,7 +26,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.HtmlUtils;
 
@@ -42,9 +44,11 @@ public final class Saml2LoginPageGeneratingFilter extends OncePerRequestFilter {
 	private final RequestMatcher matcher;
 	private final Map<String, String> providerUrls;
 
-	public Saml2LoginPageGeneratingFilter(RequestMatcher matcher,
+	public Saml2LoginPageGeneratingFilter(String filterProcessesUrl,
 										  Map<String, String> providerUrls) {
-		this.matcher = matcher;
+		Assert.hasText(filterProcessesUrl, "filterProcessesUrl is required");
+		Assert.notEmpty(providerUrls, "providerUrls are required");
+		this.matcher = new AntPathRequestMatcher(filterProcessesUrl);
 		this.providerUrls = providerUrls;
 	}
 

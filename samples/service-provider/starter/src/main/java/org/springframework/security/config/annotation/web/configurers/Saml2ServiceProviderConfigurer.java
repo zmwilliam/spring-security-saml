@@ -41,7 +41,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.header.HeaderWriterFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.util.Optional.ofNullable;
 
@@ -153,9 +152,7 @@ public class Saml2ServiceProviderConfigurer
 				p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias())
 			);
 		}
-		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(
-			new AntPathRequestMatcher(loginFilterUrl), idps
-		);
+		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(loginFilterUrl, idps);
 		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
 	}
 

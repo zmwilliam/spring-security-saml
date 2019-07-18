@@ -36,6 +36,7 @@ import org.springframework.web.util.UriUtils;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.getApplicationUri;
+import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.state;
 
 public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
@@ -47,7 +48,8 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 	public Saml2AuthenticationRequestFilter(String filterProcessesUrl,
 											Saml2IdentityProviderDetailsRepository providerRepository,
 											Saml2AuthenticationRequestResolver authenticationRequestResolver) {
-		state(filterProcessesUrl.contains("{alias}"), "filterProcessUrl must contain an {alias} matcher parameter");
+		hasText(filterProcessesUrl, "filterProcessesUrl must contain an {alias} matcher parameter");
+		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");
 		this.matcher = new AntPathRequestMatcher(filterProcessesUrl);
 		this.providerRepository = providerRepository;
 		this.authenticationRequestResolver = authenticationRequestResolver;

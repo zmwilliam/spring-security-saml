@@ -44,7 +44,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 	public Saml2WebSsoAuthenticationFilter(String filterProcessesUrl,
 										   Saml2IdentityProviderDetailsRepository identityProviderRepository) {
 		super(filterProcessesUrl);
-		state(filterProcessesUrl.contains("{alias}"), "filterProcessUrl must contain an {alias} matcher parameter");
+		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");
 		this.identityProviderRepository = identityProviderRepository;
 		this.aliasMatcher = new AntPathRequestMatcher(filterProcessesUrl);
 		setAllowSessionCreation(true);
