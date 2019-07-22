@@ -47,17 +47,31 @@ import static java.util.Optional.ofNullable;
 public class Saml2ServiceProviderConfigurer
 		extends AbstractHttpConfigurer<Saml2ServiceProviderConfigurer, HttpSecurity> {
 
+	private static final String PREFIX = "/saml/sp";
+
 	public static Saml2ServiceProviderConfigurer saml2Login() {
-		return new Saml2ServiceProviderConfigurer();
+		return saml2Login(PREFIX);
 	}
+
+	public static Saml2ServiceProviderConfigurer saml2Login(String filterPrefix) {
+		return new Saml2ServiceProviderConfigurer(filterPrefix);
+	}
+
+
+
+	static {
+		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	}
+
 
 	private AuthenticationProvider authenticationProvider;
 	private Saml2IdentityProviderDetailsRepository providerDetailsRepository;
 	private AuthenticationEntryPoint entryPoint = null;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
+	private final String filterPrefix;
 
-	static {
-		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	protected  Saml2ServiceProviderConfigurer(String filterPrefix) {
+		this.filterPrefix = filterPrefix;
 	}
 
 	public Saml2ServiceProviderConfigurer authenticationProvider(AuthenticationProvider provider) {
@@ -83,8 +97,8 @@ public class Saml2ServiceProviderConfigurer
 	@Override
 	public void init(HttpSecurity builder) throws Exception {
 		super.init(builder);
-		builder.authorizeRequests().mvcMatchers("/saml/sp/**").permitAll().anyRequest().authenticated();
-		builder.csrf().ignoringAntMatchers("/saml/sp/**");
+		builder.authorizeRequests().mvcMatchers(filterPrefix + "/**").permitAll().anyRequest().authenticated();
+		builder.csrf().ignoringAntMatchers(filterPrefix + "/**");
 
 		providerDetailsRepository = getSharedObject(
 			builder,
@@ -114,7 +128,7 @@ public class Saml2ServiceProviderConfigurer
 					alias = null;
 				}
 			}
-			String loginUrl = (alias==null) ? "/login" : "/saml/sp/authenticate/"+alias;
+			String loginUrl = (alias==null) ? "/login" : filterPrefix + "/authenticate/"+alias;
 			registerDefaultAuthenticationEntryPoint(builder, new LoginUrlAuthenticationEntryPoint(loginUrl));
 		}
 
@@ -127,9 +141,9 @@ public class Saml2ServiceProviderConfigurer
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
-		configureSaml2LoginPageFilter(builder, "/saml/sp/authenticate/", "/login");
-		configureSaml2WebSsoAuthenticationFilter(builder, "/saml/sp/SSO/{alias}/**");
-		configureSaml2AuthenticationRequestFilter(builder, "/saml/sp/authenticate/{alias}/**");
+		configureSaml2LoginPageFilter(builder, filterPrefix + "/authenticate/", "/login");
+		configureSaml2WebSsoAuthenticationFilter(builder, filterPrefix + "/SSO/{alias}/**");
+		configureSaml2AuthenticationRequestFilter(builder, filterPrefix + "/authenticate/{alias}/**");
 	}
 
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
