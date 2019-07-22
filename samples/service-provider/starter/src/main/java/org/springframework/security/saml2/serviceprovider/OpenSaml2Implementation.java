@@ -15,7 +15,7 @@
  *
  */
 
-package org.springframework.security.saml2.serviceprovider.authentication;
+package org.springframework.security.saml2.serviceprovider;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -23,10 +23,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.xml.namespace.QName;
 
 import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
+import org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
@@ -45,16 +47,19 @@ import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.saml2.encryption.EncryptedElementTypeEncryptedKeyResolver;
+import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.BasicCredential;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.xmlsec.SignatureSigningParameters;
+import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.encryption.support.ChainingEncryptedKeyResolver;
 import org.opensaml.xmlsec.encryption.support.EncryptedKeyResolver;
 import org.opensaml.xmlsec.encryption.support.InlineEncryptedKeyResolver;
 import org.opensaml.xmlsec.encryption.support.SimpleRetrievalMethodEncryptedKeyResolver;
+import org.opensaml.xmlsec.signature.KeyInfo;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureSupport;
@@ -67,11 +72,8 @@ import static java.util.Arrays.asList;
 import static org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getBuilderFactory;
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
 
-final class OpenSaml2Implementation {
+public final class OpenSaml2Implementation {
 	private static OpenSaml2Implementation instance = new OpenSaml2Implementation();
-	static OpenSaml2Implementation getInstance() {
-		return instance;
-	}
 
 	private final BasicParserPool parserPool = new BasicParserPool();
 
@@ -91,16 +93,30 @@ final class OpenSaml2Implementation {
 	 * PUBLIC METHODS
 	 * ==============================================================
 	 */
+	public static OpenSaml2Implementation getInstance() {
+		return instance;
+	}
 
-	XMLObject resolve(String xml) {
+	public <T> T buildSAMLObject(final Class<T> clazz) {
+		try {
+			QName defaultElementName = (QName) clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
+			return (T) getBuilderFactory().getBuilder(defaultElementName).buildObject(defaultElementName);
+		} catch (IllegalAccessException e) {
+			throw new Saml2Exception("Could not create SAML object", e);
+		} catch (NoSuchFieldException e) {
+			throw new Saml2Exception("Could not create SAML object", e);
+		}
+	}
+
+	public XMLObject resolve(String xml) {
 		return resolve(xml.getBytes(StandardCharsets.UTF_8));
 	}
 
-	EncryptedKeyResolver getEncryptedKeyResolver() {
+	public EncryptedKeyResolver getEncryptedKeyResolver() {
 		return encryptedKeyResolver;
 	}
 
-	String toXml(XMLObject object, Saml2IdentityProviderDetails idp)
+	public String toXml(XMLObject object, Saml2IdentityProviderDetails idp)
 		throws MarshallingException, SignatureException, SecurityException {
 		if (object instanceof SignableSAMLObject && hasSigningCredential(idp)) {
 			signXmlObject((SignableSAMLObject) object, idp);
@@ -110,9 +126,49 @@ final class OpenSaml2Implementation {
 		return SerializeSupport.nodeToString(element);
 	}
 
-	private boolean hasSigningCredential(Saml2IdentityProviderDetails idp) {
-		return !idp.getCredentialsForUsage(SIGNING).isEmpty();
+	public String getSigningAlgorithm(Saml2IdentityProviderDetails idp) {
+		if (hasSigningCredential(idp)) {
+			return SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
+		}
+		throw new IllegalArgumentException("Service Provider does not have a signing key.");
 	}
+
+	public String getSigningMethod(Saml2IdentityProviderDetails idp) {
+		if (hasSigningCredential(idp)) {
+			return SignatureConstants.ALGO_ID_DIGEST_SHA256;
+		}
+		throw new IllegalArgumentException("Service Provider does not have a signing key.");
+	}
+
+	public KeyDescriptor getKeyDescriptor(Saml2X509Credential credential, Saml2X509CredentialUsage usage) {
+		KeyDescriptor result = buildSAMLObject(KeyDescriptor.class);
+		final BasicCredential bc = getBasicCredential(credential);
+		KeyInfo keyInfo = null;
+		try {
+			keyInfo = DefaultSecurityConfigurationBootstrap.buildBasicKeyInfoGeneratorManager()
+				.getDefaultManager()
+				.getFactory(bc)
+				.newInstance()
+				.generate(bc);
+		}
+		catch (SecurityException e) {
+			throw new IllegalArgumentException(e);
+		}
+		result.setKeyInfo(keyInfo);
+		switch (usage) {
+			case SIGNING:
+				result.setUse(UsageType.SIGNING);
+				break;
+			case DECRYPTION:
+			case ENCRYPTION:
+				result.setUse(UsageType.ENCRYPTION);
+				break;
+			default: //noop
+		}
+
+		return result;
+	}
+
 
 	/*
 	 * ==============================================================
@@ -176,7 +232,10 @@ final class OpenSaml2Implementation {
 		}
 
 		registry.setParserPool(parserPool);
+	}
 
+	private boolean hasSigningCredential(Saml2IdentityProviderDetails idp) {
+		return !idp.getCredentialsForUsage(SIGNING).isEmpty();
 	}
 
 	private XMLObject resolve(byte[] xml) {
@@ -202,28 +261,21 @@ final class OpenSaml2Implementation {
 		}
 	}
 
-	static <T> T buildSAMLObject(final Class<T> clazz) {
-		try {
-			QName defaultElementName = (QName) clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
-			return (T) getBuilderFactory().getBuilder(defaultElementName).buildObject(defaultElementName);
-		} catch (IllegalAccessException e) {
-			throw new Saml2Exception("Could not create SAML object", e);
-		} catch (NoSuchFieldException e) {
-			throw new Saml2Exception("Could not create SAML object", e);
-		}
-	}
-
 	private Credential getSigningCredential(Saml2IdentityProviderDetails idp) {
 		Saml2X509Credential credential = idp.getCredentialsForUsage(SIGNING)
 			.stream()
 			.findFirst()
 			.orElseThrow(() -> new IllegalArgumentException("no signing credential configured"));
+		BasicCredential cred = getBasicCredential(credential);
+		cred.setEntityId(idp.getLocalSpEntityId());
+		cred.setUsageType(UsageType.SIGNING);
+		return cred;
+	}
+
+	private BasicCredential getBasicCredential(Saml2X509Credential credential) {
 		PublicKey publicKey = credential.getCertificate().getPublicKey();
 		final PrivateKey privateKey = credential.getPrivateKey();
-		BasicCredential cred = CredentialSupport.getSimpleCredential(publicKey, privateKey);
-		cred.setUsageType(UsageType.SIGNING);
-		cred.setEntityId(idp.getLocalSpEntityId());
-		return cred;
+		return CredentialSupport.getSimpleCredential(publicKey, privateKey);
 	}
 
 	private void signXmlObject(SignableSAMLObject object, Saml2IdentityProviderDetails idp)

@@ -20,6 +20,7 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 import java.time.Clock;
 import java.util.UUID;
 
+import org.springframework.security.saml2.serviceprovider.OpenSaml2Implementation;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 
 import org.joda.time.DateTime;
@@ -29,21 +30,19 @@ import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.security.SecurityException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 
-import static org.springframework.security.saml2.serviceprovider.authentication.OpenSaml2Implementation.buildSAMLObject;
-
 public class DefaultSaml2AuthenticationRequestResolver implements Saml2AuthenticationRequestResolver{
 	private final Clock clock = Clock.systemUTC();
 	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
 	@Override
 	public String resolveAuthenticationRequest(Saml2IdentityProviderDetails idp) {
-		AuthnRequest auth = buildSAMLObject(AuthnRequest.class);
+		AuthnRequest auth = saml.buildSAMLObject(AuthnRequest.class);
 		auth.setID("ARQ" + UUID.randomUUID().toString().substring(1));
 		auth.setIssueInstant(new DateTime(clock.millis()));
 		auth.setForceAuthn(Boolean.FALSE);
 		auth.setIsPassive(Boolean.FALSE);
 		auth.setProtocolBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect");
-		Issuer issuer = buildSAMLObject(Issuer.class);
+		Issuer issuer = saml.buildSAMLObject(Issuer.class);
 		issuer.setValue(idp.getLocalSpEntityId());
 		auth.setIssuer(issuer);
 		auth.setDestination(idp.getWebSsoUrl().toString());
