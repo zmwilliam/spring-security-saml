@@ -19,11 +19,8 @@ package org.springframework.security.saml2.serviceprovider;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.xml.namespace.QName;
 
 import org.springframework.security.saml2.Saml2Exception;
@@ -53,6 +50,7 @@ import org.opensaml.security.credential.BasicCredential;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.UsageType;
+import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.encryption.support.ChainingEncryptedKeyResolver;
@@ -129,17 +127,7 @@ public final class OpenSaml2Implementation {
 	public KeyDescriptor getKeyDescriptor(Saml2X509Credential credential, Saml2X509CredentialUsage usage) {
 		KeyDescriptor result = buildSAMLObject(KeyDescriptor.class);
 		final BasicCredential bc = getBasicCredential(credential);
-		KeyInfo keyInfo = null;
-		try {
-			keyInfo = DefaultSecurityConfigurationBootstrap.buildBasicKeyInfoGeneratorManager()
-				.getDefaultManager()
-				.getFactory(bc)
-				.newInstance()
-				.generate(bc);
-		}
-		catch (SecurityException e) {
-			throw new IllegalArgumentException(e);
-		}
+		KeyInfo keyInfo = getKeyInfo(bc);
 		result.setKeyInfo(keyInfo);
 		switch (usage) {
 			case SIGNING:
@@ -154,7 +142,6 @@ public final class OpenSaml2Implementation {
 
 		return result;
 	}
-
 
 	/*
 	 * ==============================================================
@@ -258,10 +245,11 @@ public final class OpenSaml2Implementation {
 		return cred;
 	}
 
-	private BasicCredential getBasicCredential(Saml2X509Credential credential) {
-		PublicKey publicKey = credential.getCertificate().getPublicKey();
-		final PrivateKey privateKey = credential.getPrivateKey();
-		return CredentialSupport.getSimpleCredential(publicKey, privateKey);
+	private BasicX509Credential getBasicCredential(Saml2X509Credential credential) {
+		return CredentialSupport.getSimpleCredential(
+			credential.getCertificate(),
+			credential.getPrivateKey()
+		);
 	}
 
 	private void signXmlObject(SignableSAMLObject object, Saml2IdentityProviderDetails idp)
@@ -275,4 +263,16 @@ public final class OpenSaml2Implementation {
 		SignatureSupport.signObject(object, parameters);
 	}
 
+	private KeyInfo getKeyInfo(BasicCredential bc) {
+		try {
+			return DefaultSecurityConfigurationBootstrap.buildBasicKeyInfoGeneratorManager()
+				.getDefaultManager()
+				.getFactory(bc)
+				.newInstance()
+				.generate(bc);
+		}
+		catch (SecurityException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
 }

@@ -35,6 +35,7 @@ import org.opensaml.security.SecurityException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 
 import static java.util.Arrays.asList;
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.DECRYPTION;
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.ENCRYPTION;
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
 
@@ -100,15 +101,17 @@ public class DefaultSaml2ServiceProviderMetadataResolver implements Saml2Service
 		List<KeyDescriptor> result = new LinkedList<>();
 		idp.getCredentialsForUsage(SIGNING)
 			.forEach(c -> result.add(saml.getKeyDescriptor(c, SIGNING)));
-		idp.getCredentialsForUsage(ENCRYPTION)
+		idp.getCredentialsForUsage(DECRYPTION)
 			.forEach(c -> result.add(saml.getKeyDescriptor(c, ENCRYPTION)));
 		return result;
 	}
 
 	private String getSpSSOLocation(Saml2IdentityProviderDetails idp) {
 		return UriComponentsBuilder
-			.fromHttpUrl(idp.getLocalSpEntityId())
+			.fromHttpUrl(idp.getApplicationUri())
 			.path(urlPrefix)
+			.path("/SSO/")
+			.path(idp.getAlias())
 			.build()
 			.toUriString();
 	}

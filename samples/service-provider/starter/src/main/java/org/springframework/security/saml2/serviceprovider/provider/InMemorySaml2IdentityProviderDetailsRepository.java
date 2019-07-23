@@ -81,7 +81,8 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 			idp.getAlias(),
 			idp.getWebSsoUrl(),
 			idp.getCredentials(),
-			localSpEntityId
+			localSpEntityId,
+			requestUri
 		);
 	}
 

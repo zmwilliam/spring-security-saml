@@ -38,15 +38,18 @@ public class Saml2IdentityProviderDetails {
 	private final URI webSsoUrl;
 	private final List<Saml2X509Credential> credentials;
 	private final String localSpEntityId;
+	private final String applicationUri;
 
 	protected Saml2IdentityProviderDetails(String idpEntityId,
 										   String alias,
 										   URI idpWebSsoUri,
 										   List<Saml2X509Credential> credentials,
-										   String localSpEntityId) {
+										   String localSpEntityId,
+										   String applicationUri) {
 		hasText(idpEntityId, "idpEntityId is required");
 		hasText(alias, "alias is required");
 		hasText(localSpEntityId, "localSpEntityId is required");
+		hasText(applicationUri, "applicationUri is required");
 		notEmpty(credentials, "credentials are required");
 		notNull(idpWebSsoUri, "idpWebSsoUri is required");
 		credentials.stream().forEach(c -> notNull(c, "credentials cannot contain null elements"));
@@ -55,6 +58,7 @@ public class Saml2IdentityProviderDetails {
 		this.credentials = credentials;
 		this.webSsoUrl = idpWebSsoUri;
 		this.localSpEntityId = localSpEntityId;
+		this.applicationUri = applicationUri;
 	}
 
 	public String getEntityId() {
@@ -84,6 +88,10 @@ public class Saml2IdentityProviderDetails {
 		return localSpEntityId;
 	}
 
+	public String getApplicationUri() {
+		return applicationUri;
+	}
+
 	private boolean containsCredentialForTypes(Set<Saml2X509CredentialUsage> existing,
 											   Set<Saml2X509CredentialUsage> requested) {
 		for (Saml2X509CredentialUsage u : requested) {
@@ -93,4 +101,6 @@ public class Saml2IdentityProviderDetails {
 		}
 		return false;
 	}
+
+
 }
