@@ -31,13 +31,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
-import org.springframework.security.saml2.serviceprovider.metadata.DefaultSaml2ServiceProviderMetadataResolver;
-import org.springframework.security.saml2.serviceprovider.metadata.Saml2ServiceProviderMetadataResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2MetadataFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -71,7 +68,6 @@ public class Saml2ServiceProviderConfigurer
 	private Saml2IdentityProviderDetailsRepository providerDetailsRepository;
 	private AuthenticationEntryPoint entryPoint = null;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
-	private Saml2ServiceProviderMetadataResolver metadataResolver;
 
 	private final String filterPrefix;
 
@@ -91,11 +87,6 @@ public class Saml2ServiceProviderConfigurer
 
 	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2IdentityProviderDetailsRepository repo) {
 		this.providerDetailsRepository = repo;
-		return this;
-	}
-
-	public Saml2ServiceProviderConfigurer metadataResolver(Saml2ServiceProviderMetadataResolver resolver) {
-		this.metadataResolver = resolver;
 		return this;
 	}
 
@@ -147,13 +138,6 @@ public class Saml2ServiceProviderConfigurer
 			() -> new DefaultSaml2AuthenticationRequestResolver(),
 			authenticationRequestResolver
 		);
-
-		metadataResolver = getSharedObject(
-			builder,
-			Saml2ServiceProviderMetadataResolver.class,
-			() -> new DefaultSaml2ServiceProviderMetadataResolver(filterPrefix),
-			metadataResolver
-		);
 	}
 
 	@Override
@@ -161,16 +145,6 @@ public class Saml2ServiceProviderConfigurer
 		configureSaml2LoginPageFilter(builder, filterPrefix + "/authenticate/", "/login");
 		configureSaml2WebSsoAuthenticationFilter(builder, filterPrefix + "/SSO/{alias}/**");
 		configureSaml2AuthenticationRequestFilter(builder, filterPrefix + "/authenticate/{alias}/**");
-		configureSaml2MetadataProvider(builder, filterPrefix + "/metadata/{alias}");
-	}
-
-	protected void configureSaml2MetadataProvider(HttpSecurity builder, String filterUrl) {
-		Filter metadataFilter = new Saml2MetadataFilter(
-			filterUrl,
-			providerDetailsRepository,
-			metadataResolver
-		);
-		builder.addFilterAfter(metadataFilter, HeaderWriterFilter.class);
 	}
 
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
