@@ -126,20 +126,6 @@ public final class OpenSaml2Implementation {
 		return SerializeSupport.nodeToString(element);
 	}
 
-	public String getSigningAlgorithm(Saml2IdentityProviderDetails idp) {
-		if (hasSigningCredential(idp)) {
-			return SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
-		}
-		throw new IllegalArgumentException("Service Provider does not have a signing key.");
-	}
-
-	public String getSigningMethod(Saml2IdentityProviderDetails idp) {
-		if (hasSigningCredential(idp)) {
-			return SignatureConstants.ALGO_ID_DIGEST_SHA256;
-		}
-		throw new IllegalArgumentException("Service Provider does not have a signing key.");
-	}
-
 	public KeyDescriptor getKeyDescriptor(Saml2X509Credential credential, Saml2X509CredentialUsage usage) {
 		KeyDescriptor result = buildSAMLObject(KeyDescriptor.class);
 		final BasicCredential bc = getBasicCredential(credential);
