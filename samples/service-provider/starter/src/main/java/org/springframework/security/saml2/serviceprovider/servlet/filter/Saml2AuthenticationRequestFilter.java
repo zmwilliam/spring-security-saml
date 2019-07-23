@@ -76,7 +76,7 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 		Assert.hasText(alias, "IDP Alias must be present and valid");
 		String applicationRequestUri = getApplicationUri(request);
 
-		Saml2IdentityProviderDetails idp = providerRepository.getIdentityProviderByAlias(alias, applicationRequestUri);
+		Saml2IdentityProviderDetails idp = providerRepository.findByAlias(alias, applicationRequestUri);
 		String xml = authenticationRequestResolver.resolveAuthenticationRequest(idp);
 		String encoded = encode(deflate(xml));
 		String redirect = UriComponentsBuilder

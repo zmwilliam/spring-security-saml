@@ -66,7 +66,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
-		Saml2IdentityProviderDetails idp = identityProviderRepository.getIdentityProviderByAlias(
+		Saml2IdentityProviderDetails idp = identityProviderRepository.findByAlias(
 			getIdpAlias(request),
 			getApplicationUri(request)
 		);

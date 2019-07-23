@@ -11,7 +11,7 @@ public interface Saml2IdentityProviderDetailsRepository {
 	 * @param applicationUri - uri of the local application used to generate the local entityId, may be null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails getIdentityProviderByEntityId(String idpEntityId, String applicationUri);
+	Saml2IdentityProviderDetails findByEntityId(String idpEntityId, String applicationUri);
 
 	/**
 	 * Resolves an entity provider by entityId
@@ -19,6 +19,6 @@ public interface Saml2IdentityProviderDetailsRepository {
 	 * @param applicationUri - uri of the local application used to generate the local entityId, may be null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails getIdentityProviderByAlias(String alias, String applicationUri);
+	Saml2IdentityProviderDetails findByAlias(String alias, String applicationUri);
 
 }

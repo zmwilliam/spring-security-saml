@@ -20,7 +20,6 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 import java.time.Clock;
 import java.util.UUID;
 
-import org.springframework.security.saml2.serviceprovider.OpenSaml2Implementation;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 
 import org.joda.time.DateTime;
