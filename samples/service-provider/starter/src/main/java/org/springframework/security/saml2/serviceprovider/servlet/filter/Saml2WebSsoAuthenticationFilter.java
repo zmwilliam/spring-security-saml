@@ -66,7 +66,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		String saml2Response = request.getParameter("SAMLResponse");
 		byte[] b = decode(saml2Response);
 
-		String responseXml = deflateIfRequired(request, b);
+		String responseXml = inflateIfRequired(request, b);
 		Saml2IdentityProviderDetails idp = identityProviderRepository.findByAlias(getIdpAlias(request));
 		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(idp, request);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
@@ -86,7 +86,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		return null;
 	}
 
-	private String deflateIfRequired(HttpServletRequest request, byte[] b) {
+	private String inflateIfRequired(HttpServletRequest request, byte[] b) {
 		if (HttpMethod.GET.matches(request.getMethod())) {
 			return inflate(b);
 		}
