@@ -31,8 +31,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderRegistration;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -119,7 +119,7 @@ public class Saml2ServiceProviderConfigurer
 			final Saml2IdentityProviderDetailsRepository idps = providerDetailsRepository;
 			String alias = null;
 			if (idps instanceof Iterable) {
-				Iterator<Saml2IdentityProviderRegistration> it = ((Iterable<Saml2IdentityProviderRegistration>) idps).iterator();
+				Iterator<Saml2IdentityProviderDetails> it = ((Iterable<Saml2IdentityProviderDetails>) idps).iterator();
 				int count = 0;
 				while (it.hasNext() && count<2) {
 					count++;
@@ -150,6 +150,7 @@ public class Saml2ServiceProviderConfigurer
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
 		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
 			filterUrl,
+			"{baseUrl}" + filterPrefix + "/SSO/{alias}",
 			providerDetailsRepository,
 			authenticationRequestResolver
 		);
@@ -162,7 +163,7 @@ public class Saml2ServiceProviderConfigurer
 		Saml2IdentityProviderDetailsRepository idpRepo = providerDetailsRepository;
 		Map<String,String> idps = new HashMap<>();
 		if (idpRepo instanceof Iterable) {
-			Iterable<Saml2IdentityProviderRegistration> repo = (Iterable<Saml2IdentityProviderRegistration>) idpRepo;
+			Iterable<Saml2IdentityProviderDetails> repo = (Iterable<Saml2IdentityProviderDetails>) idpRepo;
 			repo.forEach(
 				p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias())
 			);

@@ -37,19 +37,23 @@ public class Saml2IdentityProviderDetails {
 	private final String alias;
 	private final URI webSsoUrl;
 	private final List<Saml2X509Credential> credentials;
-	private final String localSpEntityId;
-	private final String applicationUri;
+	private final String localSpEntityIdTemplate;
 
-	protected Saml2IdentityProviderDetails(String idpEntityId,
+	public Saml2IdentityProviderDetails(String idpEntityId,
+										   String alias,
+										   URI idpWebSsoUri,
+										   List<Saml2X509Credential> credentials) {
+		this(idpEntityId, alias, idpWebSsoUri, credentials, "{baseUrl}/saml/sp/metadata/{alias}");
+	}
+
+	public Saml2IdentityProviderDetails(String idpEntityId,
 										   String alias,
 										   URI idpWebSsoUri,
 										   List<Saml2X509Credential> credentials,
-										   String localSpEntityId,
-										   String applicationUri) {
+										   String localSpEntityIdTemplate) {
 		hasText(idpEntityId, "idpEntityId is required");
 		hasText(alias, "alias is required");
-		hasText(localSpEntityId, "localSpEntityId is required");
-		hasText(applicationUri, "applicationUri is required");
+		hasText(localSpEntityIdTemplate, "localSpEntityIdTemplate is required");
 		notEmpty(credentials, "credentials are required");
 		notNull(idpWebSsoUri, "idpWebSsoUri is required");
 		credentials.stream().forEach(c -> notNull(c, "credentials cannot contain null elements"));
@@ -57,8 +61,7 @@ public class Saml2IdentityProviderDetails {
 		this.alias = alias;
 		this.credentials = credentials;
 		this.webSsoUrl = idpWebSsoUri;
-		this.localSpEntityId = localSpEntityId;
-		this.applicationUri = applicationUri;
+		this.localSpEntityIdTemplate = localSpEntityIdTemplate;
 	}
 
 	public String getEntityId() {
@@ -84,12 +87,8 @@ public class Saml2IdentityProviderDetails {
 		return webSsoUrl;
 	}
 
-	public String getLocalSpEntityId() {
-		return localSpEntityId;
-	}
-
-	public String getApplicationUri() {
-		return applicationUri;
+	public String getLocalSpEntityIdTemplate() {
+		return localSpEntityIdTemplate;
 	}
 
 	private boolean containsCredentialForTypes(Set<Saml2X509CredentialUsage> existing,

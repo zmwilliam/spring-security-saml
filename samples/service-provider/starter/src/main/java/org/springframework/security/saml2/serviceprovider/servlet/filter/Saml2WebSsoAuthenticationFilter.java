@@ -32,7 +32,6 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.getApplicationUri;
 import static org.springframework.util.Assert.state;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -66,14 +65,14 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = Saml2EncodingUtils.decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
-		Saml2IdentityProviderDetails idp = identityProviderRepository.findByAlias(
-			getIdpAlias(request),
-			getApplicationUri(request)
-		);
+		Saml2IdentityProviderDetails idp = identityProviderRepository.findByAlias(getIdpAlias(request));
+		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(idp, request);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
 			responseXml,
 			request.getRequestURL().toString(),
-			idp
+			idp.getEntityId(),
+			localSpEntityId,
+			idp.getCredentialsForUsage()
 		);
 		return getAuthenticationManager().authenticate(authentication);
 	}

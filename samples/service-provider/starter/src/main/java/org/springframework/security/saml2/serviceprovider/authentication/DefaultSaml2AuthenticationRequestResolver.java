@@ -34,7 +34,7 @@ public class DefaultSaml2AuthenticationRequestResolver implements Saml2Authentic
 	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
 
 	@Override
-	public String resolveAuthenticationRequest(Saml2IdentityProviderDetails idp) {
+	public String resolveAuthenticationRequest(Saml2AuthenticationRequest request) {
 		AuthnRequest auth = saml.buildSAMLObject(AuthnRequest.class);
 		auth.setID("ARQ" + UUID.randomUUID().toString().substring(1));
 		auth.setIssueInstant(new DateTime(clock.millis()));
@@ -42,11 +42,15 @@ public class DefaultSaml2AuthenticationRequestResolver implements Saml2Authentic
 		auth.setIsPassive(Boolean.FALSE);
 		auth.setProtocolBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect");
 		Issuer issuer = saml.buildSAMLObject(Issuer.class);
-		issuer.setValue(idp.getLocalSpEntityId());
+		issuer.setValue(request.getLocalSpEntityId());
 		auth.setIssuer(issuer);
-		auth.setDestination(idp.getWebSsoUrl().toString());
+		auth.setDestination(request.getWebSsoUri());
 		try {
-			return saml.toXml(auth, idp);
+			return saml.toXml(
+				auth,
+				request.getCredentials(),
+				request.getLocalSpEntityId()
+			);
 		} catch (MarshallingException | SignatureException | SecurityException e) {
 			throw new IllegalStateException(e);
 		}

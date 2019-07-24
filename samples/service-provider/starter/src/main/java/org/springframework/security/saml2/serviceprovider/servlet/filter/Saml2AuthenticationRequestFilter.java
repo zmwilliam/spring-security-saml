@@ -24,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequest;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
@@ -33,9 +34,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
+import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.getApplicationUri;
 import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.state;
 
@@ -44,8 +45,10 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 	private final AntPathRequestMatcher matcher;
 	private final Saml2IdentityProviderDetailsRepository providerRepository;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
+	private final String webSsoUriTemplate;
 
 	public Saml2AuthenticationRequestFilter(String filterProcessesUrl,
+											String webSsoUriTemplate,
 											Saml2IdentityProviderDetailsRepository providerRepository,
 											Saml2AuthenticationRequestResolver authenticationRequestResolver) {
 		hasText(filterProcessesUrl, "filterProcessesUrl must contain an {alias} matcher parameter");
@@ -53,6 +56,7 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 		this.matcher = new AntPathRequestMatcher(filterProcessesUrl);
 		this.providerRepository = providerRepository;
 		this.authenticationRequestResolver = authenticationRequestResolver;
+		this.webSsoUriTemplate = webSsoUriTemplate;
 	}
 
 	@Override
@@ -74,10 +78,20 @@ public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
 			logger.debug("Creating SAML2 SP Authentication Request for IDP[" + alias + "]");
 		}
 		Assert.hasText(alias, "IDP Alias must be present and valid");
-		String applicationRequestUri = getApplicationUri(request);
 
-		Saml2IdentityProviderDetails idp = providerRepository.findByAlias(alias, applicationRequestUri);
-		String xml = authenticationRequestResolver.resolveAuthenticationRequest(idp);
+		Saml2IdentityProviderDetails idp = providerRepository.findByAlias(alias);
+		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(idp, request);
+		Saml2AuthenticationRequest authNRequest = new Saml2AuthenticationRequest(
+			localSpEntityId,
+			Saml2Utils.resolveUrlTemplate(
+				webSsoUriTemplate,
+				Saml2Utils.getApplicationUri(request),
+				idp.getEntityId(),
+				idp.getAlias()
+			),
+			idp.getCredentialsForUsage(SIGNING)
+		);
+		String xml = authenticationRequestResolver.resolveAuthenticationRequest(authNRequest);
 		String encoded = encode(deflate(xml));
 		String redirect = UriComponentsBuilder
 			.fromUri(idp.getWebSsoUrl())

@@ -17,14 +17,21 @@
 
 package org.springframework.security.saml2.serviceprovider.servlet.filter;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.springframework.security.web.util.UrlUtils.buildFullRequestUrl;
 import static org.springframework.web.util.UriComponentsBuilder.fromHttpUrl;
 
 class Saml2Utils {
+
+	private static final char PATH_DELIMITER = '/';
 
 	static String getApplicationUri(HttpServletRequest request) {
 		UriComponents uriComponents = fromHttpUrl(buildFullRequestUrl(request))
@@ -33,5 +40,51 @@ class Saml2Utils {
 			.fragment(null)
 			.build();
 		return uriComponents.toUriString();
+	}
+
+	static String getServiceProviderEntityId(Saml2IdentityProviderDetails idp,
+											 HttpServletRequest request) {
+		return resolveUrlTemplate(
+			idp.getLocalSpEntityIdTemplate(),
+			getApplicationUri(request),
+			idp.getEntityId(),
+			idp.getAlias()
+		);
+	}
+
+	static String resolveUrlTemplate(String template,
+									 String defaultUrl,
+									 String entityId,
+									 String alias) {
+		if (!StringUtils.hasText(template)) {
+			return defaultUrl;
+		}
+
+		Map<String, String> uriVariables = new HashMap<>();
+		UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(defaultUrl)
+			.replaceQuery(null)
+			.fragment(null)
+			.build();
+		String scheme = uriComponents.getScheme();
+		uriVariables.put("baseScheme", scheme == null ? "" : scheme);
+		String host = uriComponents.getHost();
+		uriVariables.put("baseHost", host == null ? "" : host);
+		// following logic is based on HierarchicalUriComponents#toUriString()
+		int port = uriComponents.getPort();
+		uriVariables.put("basePort", port == -1 ? "" : ":" + port);
+		String path = uriComponents.getPath();
+		if (StringUtils.hasLength(path)) {
+			if (path.charAt(0) != PATH_DELIMITER) {
+				path = PATH_DELIMITER + path;
+			}
+		}
+		uriVariables.put("basePath", path == null ? "" : path);
+		uriVariables.put("baseUrl", uriComponents.toUriString());
+		uriVariables.put("entityId", StringUtils.hasText(entityId) ? entityId : "");
+		uriVariables.put("alias", StringUtils.hasText(alias) ? alias : "");
+
+		return UriComponentsBuilder.fromUriString(template)
+			.buildAndExpand(uriVariables)
+			.toUriString();
 	}
 }

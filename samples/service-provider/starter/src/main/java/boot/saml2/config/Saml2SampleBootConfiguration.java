@@ -30,8 +30,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
 import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderRegistration;
+import org.springframework.util.StringUtils;
 
 import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
 
@@ -61,16 +62,23 @@ public class Saml2SampleBootConfiguration {
 		this.providers = providers;
 	}
 
-	private List<Saml2IdentityProviderRegistration> getIdentityProviders(List<IdentityProvider> identityProviders) {
+	private List<Saml2IdentityProviderDetails> getIdentityProviders(List<IdentityProvider> identityProviders) {
 		return identityProviders.stream()
 				.map(
-					p -> new Saml2IdentityProviderRegistration(
-						p.getEntityId(),
-						p.getAlias(),
-						p.getWebSsoUrlAsURI(),
-						p.getProviderCredentials(),
-						p.getLocalSpEntityIdTemplate()
-					)
+					p -> StringUtils.hasText(p.getLocalSpEntityIdTemplate()) ?
+							new Saml2IdentityProviderDetails(
+								p.getEntityId(),
+								p.getAlias(),
+								p.getWebSsoUrlAsURI(),
+								p.getProviderCredentials(),
+								p.getLocalSpEntityIdTemplate()
+							) :
+							new Saml2IdentityProviderDetails(
+								p.getEntityId(),
+								p.getAlias(),
+								p.getWebSsoUrlAsURI(),
+								p.getProviderCredentials()
+							)
 				)
 				.collect(Collectors.toList());
 	}

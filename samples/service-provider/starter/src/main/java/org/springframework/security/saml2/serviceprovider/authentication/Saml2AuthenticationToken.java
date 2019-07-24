@@ -17,22 +17,30 @@
 
 package org.springframework.security.saml2.serviceprovider.authentication;
 
+import java.util.List;
+
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.credentials.Saml2X509Credential;
 
 public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 
 	private final String saml2Response;
 	private final String recipientUri;
-	private final Saml2IdentityProviderDetails identityProvider;
+	private String idpEntityId;
+	private String localSpEntityId;
+	private List<Saml2X509Credential> credentials;
 
 	public Saml2AuthenticationToken(String saml2Response,
 									String recipientUri,
-									Saml2IdentityProviderDetails identityProvider) {
+									String idpEntityId,
+									String localSpEntityId,
+									List<Saml2X509Credential> credentials) {
 		super(null);
 		this.saml2Response = saml2Response;
 		this.recipientUri = recipientUri;
-		this.identityProvider = identityProvider;
+		this.idpEntityId = idpEntityId;
+		this.localSpEntityId = localSpEntityId;
+		this.credentials = credentials;
 	}
 
 	@Override
@@ -53,8 +61,12 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 		return recipientUri;
 	}
 
-	public Saml2IdentityProviderDetails getIdentityProvider() {
-		return identityProvider;
+	public String getLocalSpEntityId() {
+		return localSpEntityId;
+	}
+
+	public List<Saml2X509Credential> getX509Credentials() {
+		return credentials;
 	}
 
 	@Override
@@ -67,4 +79,7 @@ public class Saml2AuthenticationToken extends AbstractAuthenticationToken {
 		throw new IllegalArgumentException();
 	}
 
+	public String getIdpEntityId() {
+		return idpEntityId;
+	}
 }
