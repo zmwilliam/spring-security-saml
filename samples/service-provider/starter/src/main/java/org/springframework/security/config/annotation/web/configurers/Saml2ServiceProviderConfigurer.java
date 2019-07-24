@@ -17,8 +17,7 @@
 
 package org.springframework.security.config.annotation.web.configurers;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.servlet.Filter;
@@ -116,20 +115,12 @@ public class Saml2ServiceProviderConfigurer
 		if (entryPoint != null) {
 			registerDefaultAuthenticationEntryPoint(builder, entryPoint);
 		} else {
-			final Saml2IdentityProviderDetailsRepository idps = providerDetailsRepository;
-			String alias = null;
-			if (idps instanceof Iterable) {
-				Iterator<Saml2IdentityProviderDetails> it = ((Iterable<Saml2IdentityProviderDetails>) idps).iterator();
-				int count = 0;
-				while (it.hasNext() && count<2) {
-					count++;
-					alias = it.next().getAlias();
-				}
-				if (count>1) {
-					alias = null;
-				}
-			}
-			String loginUrl = (alias==null) ? "/login" : filterPrefix + "/authenticate/"+alias;
+			final Map<String, String> providerUrlMap =
+				getIdentityProviderUrlMap(filterPrefix + "/authenticate/", providerDetailsRepository);
+
+			String loginUrl = (providerUrlMap.size() != 1) ?
+				"/login" :
+				providerUrlMap.entrySet().iterator().next().getValue();
 			registerDefaultAuthenticationEntryPoint(builder, new LoginUrlAuthenticationEntryPoint(loginUrl));
 		}
 
@@ -161,15 +152,22 @@ public class Saml2ServiceProviderConfigurer
 												 String authRequestPrefixUrl,
 												 String loginFilterUrl) {
 		Saml2IdentityProviderDetailsRepository idpRepo = providerDetailsRepository;
-		Map<String,String> idps = new HashMap<>();
+		Map<String, String> idps = getIdentityProviderUrlMap(authRequestPrefixUrl, idpRepo);
+		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(loginFilterUrl, idps);
+		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, String> getIdentityProviderUrlMap(String authRequestPrefixUrl,
+														  Saml2IdentityProviderDetailsRepository idpRepo) {
+		Map<String,String> idps = new LinkedHashMap<>();
 		if (idpRepo instanceof Iterable) {
 			Iterable<Saml2IdentityProviderDetails> repo = (Iterable<Saml2IdentityProviderDetails>) idpRepo;
 			repo.forEach(
 				p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias())
 			);
 		}
-		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(loginFilterUrl, idps);
-		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
+		return idps;
 	}
 
 	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder,

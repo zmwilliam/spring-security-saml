@@ -35,8 +35,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.deflate;
-import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2EncodingUtils.encode;
+import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.deflate;
+import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.encode;
 import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.state;
 

@@ -32,6 +32,8 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.decode;
+import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.inflate;
 import static org.springframework.util.Assert.state;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -62,7 +64,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 			throw new BadCredentialsException("Missing SAML2 response data");
 		}
 		String saml2Response = request.getParameter("SAMLResponse");
-		byte[] b = Saml2EncodingUtils.decode(saml2Response);
+		byte[] b = decode(saml2Response);
 
 		String responseXml = deflateIfRequired(request, b);
 		Saml2IdentityProviderDetails idp = identityProviderRepository.findByAlias(getIdpAlias(request));
@@ -86,7 +88,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 
 	private String deflateIfRequired(HttpServletRequest request, byte[] b) {
 		if (HttpMethod.GET.matches(request.getMethod())) {
-			return Saml2EncodingUtils.inflate(b);
+			return inflate(b);
 		}
 		else {
 			return new String(b, UTF_8);

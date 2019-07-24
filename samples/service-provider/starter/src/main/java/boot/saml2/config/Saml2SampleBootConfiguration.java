@@ -53,9 +53,7 @@ public class Saml2SampleBootConfiguration {
 
 	@Bean
 	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
-		InMemorySaml2IdentityProviderDetailsRepository idpRepo =
-			new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(providers));
-		return idpRepo;
+		return new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(providers));
 	}
 
 	public void setIdentityProviders(List<IdentityProvider> providers) {

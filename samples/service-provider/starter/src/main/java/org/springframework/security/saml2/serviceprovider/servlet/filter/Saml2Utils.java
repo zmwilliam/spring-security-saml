@@ -17,21 +17,67 @@
 
 package org.springframework.security.saml2.serviceprovider.servlet.filter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterOutputStream;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import org.apache.commons.codec.binary.Base64;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.zip.Deflater.DEFLATED;
 import static org.springframework.security.web.util.UrlUtils.buildFullRequestUrl;
 import static org.springframework.web.util.UriComponentsBuilder.fromHttpUrl;
 
-class Saml2Utils {
+final class Saml2Utils {
 
+	private static Base64 UNCHUNKED_ENCODER = new Base64(0, new byte[] { '\n' });
 	private static final char PATH_DELIMITER = '/';
+
+	static String encode(byte[] b) {
+		return UNCHUNKED_ENCODER.encodeToString(b);
+	}
+
+	static byte[] decode(String s) {
+		return UNCHUNKED_ENCODER.decode(s);
+	}
+
+	static byte[] deflate(String s) {
+		try {
+			ByteArrayOutputStream b = new ByteArrayOutputStream();
+			DeflaterOutputStream deflater = new DeflaterOutputStream(b, new Deflater(DEFLATED, true));
+			deflater.write(s.getBytes(UTF_8));
+			deflater.finish();
+			return b.toByteArray();
+		}
+		catch (IOException e) {
+			throw new Saml2Exception("Unable to deflate string", e);
+		}
+	}
+
+	static String inflate(byte[] b) {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			InflaterOutputStream iout = new InflaterOutputStream(out, new Inflater(true));
+			iout.write(b);
+			iout.finish();
+			return new String(out.toByteArray(), UTF_8);
+		}
+		catch (IOException e) {
+			throw new Saml2Exception("Unable to inflate string", e);
+		}
+	}
 
 	static String getApplicationUri(HttpServletRequest request) {
 		UriComponents uriComponents = fromHttpUrl(buildFullRequestUrl(request))
@@ -53,15 +99,15 @@ class Saml2Utils {
 	}
 
 	static String resolveUrlTemplate(String template,
-									 String defaultUrl,
+									 String baseUrl,
 									 String entityId,
 									 String alias) {
 		if (!StringUtils.hasText(template)) {
-			return defaultUrl;
+			return baseUrl;
 		}
 
 		Map<String, String> uriVariables = new HashMap<>();
-		UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(defaultUrl)
+		UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(baseUrl)
 			.replaceQuery(null)
 			.fragment(null)
 			.build();
