@@ -45,11 +45,11 @@ import static org.springframework.security.saml2.credentials.Saml2X509Credential
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.SIGNING;
 
 @Configuration
-public class Saml2SampleBootConverters {
+class OpenSamlKeyConverters {
 
 	@Component
 	@ConfigurationPropertiesBinding
-	public static class X509CertificateConverter implements Converter<String, X509Certificate> {
+	static class X509CertificateConverter implements Converter<String, X509Certificate> {
 
 		@Override
 		public X509Certificate convert(String source) {
@@ -65,7 +65,7 @@ public class Saml2SampleBootConverters {
 
 	@Component
 	@ConfigurationPropertiesBinding
-	public static class Saml2X509CredentialConverter implements Converter<StringX509Credential, Saml2X509Credential> {
+	static class Saml2X509CredentialConverter implements Converter<StringX509Credential, Saml2X509Credential> {
 
 		@Override
 		public Saml2X509Credential convert(StringX509Credential source) {

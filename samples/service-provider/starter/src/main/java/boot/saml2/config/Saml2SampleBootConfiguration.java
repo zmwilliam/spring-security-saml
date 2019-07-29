@@ -34,7 +34,7 @@ import org.springframework.security.saml2.serviceprovider.provider.Saml2Identity
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.util.StringUtils;
 
-import boot.saml2.config.Saml2SampleBootConverters.Saml2X509CredentialConverter;
+import boot.saml2.config.OpenSamlKeyConverters.Saml2X509CredentialConverter;
 
 import static java.util.Collections.emptyList;
 import static org.springframework.security.saml2.credentials.Saml2X509Credential.Saml2X509CredentialUsage.ENCRYPTION;
@@ -42,12 +42,8 @@ import static org.springframework.security.saml2.credentials.Saml2X509Credential
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.saml2.login")
-@Import(Saml2SampleBootConverters.class)
+@Import(OpenSamlKeyConverters.class)
 public class Saml2SampleBootConfiguration {
-
-	static {
-		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-	}
 
 	private List<IdentityProvider> providers;
 
