@@ -31,7 +31,7 @@ import org.springframework.security.saml2.serviceprovider.authentication.OpenSam
 import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -64,7 +64,7 @@ public class Saml2ServiceProviderConfigurer
 
 
 	private AuthenticationProvider authenticationProvider;
-	private Saml2IdentityProviderDetailsRepository providerDetailsRepository;
+	private Saml2RelyingPartyRepository providerDetailsRepository;
 	private AuthenticationEntryPoint entryPoint = null;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 
@@ -84,7 +84,7 @@ public class Saml2ServiceProviderConfigurer
 		return this;
 	}
 
-	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2IdentityProviderDetailsRepository repo) {
+	public Saml2ServiceProviderConfigurer identityProviderRepository(Saml2RelyingPartyRepository repo) {
 		this.providerDetailsRepository = repo;
 		return this;
 	}
@@ -102,7 +102,7 @@ public class Saml2ServiceProviderConfigurer
 
 		providerDetailsRepository = getSharedObject(
 			builder,
-			Saml2IdentityProviderDetailsRepository.class,
+			Saml2RelyingPartyRepository.class,
 			() -> providerDetailsRepository,
 			providerDetailsRepository
 		);
@@ -151,7 +151,7 @@ public class Saml2ServiceProviderConfigurer
 	protected void configureSaml2LoginPageFilter(HttpSecurity builder,
 												 String authRequestPrefixUrl,
 												 String loginFilterUrl) {
-		Saml2IdentityProviderDetailsRepository idpRepo = providerDetailsRepository;
+		Saml2RelyingPartyRepository idpRepo = providerDetailsRepository;
 		Map<String, String> idps = getIdentityProviderUrlMap(authRequestPrefixUrl, idpRepo);
 		Filter loginPageFilter =  new Saml2LoginPageGeneratingFilter(loginFilterUrl, idps);
 		builder.addFilterAfter(loginPageFilter, HeaderWriterFilter.class);
@@ -159,7 +159,7 @@ public class Saml2ServiceProviderConfigurer
 
 	@SuppressWarnings("unchecked")
 	private Map<String, String> getIdentityProviderUrlMap(String authRequestPrefixUrl,
-														  Saml2IdentityProviderDetailsRepository idpRepo) {
+														  Saml2RelyingPartyRepository idpRepo) {
 		Map<String,String> idps = new LinkedHashMap<>();
 		if (idpRepo instanceof Iterable) {
 			Iterable<Saml2RelyingPartyRegistration> repo = (Iterable<Saml2RelyingPartyRegistration>) idpRepo;

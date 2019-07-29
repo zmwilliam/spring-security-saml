@@ -18,11 +18,10 @@
 package org.springframework.security.saml2.serviceprovider.provider;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 
@@ -30,20 +29,20 @@ import static java.util.Arrays.asList;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
-public class InMemorySaml2IdentityProviderDetailsRepository
-		implements Saml2IdentityProviderDetailsRepository, Iterable<Saml2RelyingPartyRegistration> {
+public class InMemorySaml2RelyingPartyRepository
+		implements Saml2RelyingPartyRepository, Iterable<Saml2RelyingPartyRegistration> {
 
 	final Map<String, Saml2RelyingPartyRegistration> byId;
 	final Map<String, Saml2RelyingPartyRegistration> byAlias;
 
-	public InMemorySaml2IdentityProviderDetailsRepository(Saml2RelyingPartyRegistration... identityProviders) {
-		this(asList(identityProviders));
+	public InMemorySaml2RelyingPartyRepository(Saml2RelyingPartyRegistration... registrations) {
+		this(asList(registrations));
 	}
 
-	public InMemorySaml2IdentityProviderDetailsRepository(Collection<Saml2RelyingPartyRegistration> identityProviders) {
-		notEmpty(identityProviders, "identity providers cannot be empty");
-		byId = createMappingToIdentityProvider(identityProviders, Saml2RelyingPartyRegistration::getRemoteIdpEntityId);
-		byAlias = createMappingToIdentityProvider(identityProviders, Saml2RelyingPartyRegistration::getAlias);
+	public InMemorySaml2RelyingPartyRepository(Collection<Saml2RelyingPartyRegistration> registrations) {
+		notEmpty(registrations, "registrations cannot be empty");
+		byId = createMappingToIdentityProvider(registrations, Saml2RelyingPartyRegistration::getRemoteIdpEntityId);
+		byAlias = createMappingToIdentityProvider(registrations, Saml2RelyingPartyRegistration::getAlias);
 	}
 
 	@Override
@@ -69,16 +68,14 @@ public class InMemorySaml2IdentityProviderDetailsRepository
 			Function<Saml2RelyingPartyRegistration,
 			String> mapper
 	) {
-		return Collections.unmodifiableMap(
-			idps.stream()
-				.peek(idp -> notNull(idp, "identity providers cannot contain null values"))
-				.collect(
-					Collectors.toMap(
-						idp -> mapper.apply(idp),
-						Function.identity()
-					)
-				)
-		);
+		LinkedHashMap<String, Saml2RelyingPartyRegistration> result = new LinkedHashMap<>();
+		for (Saml2RelyingPartyRegistration idp : idps) {
+			notNull(idp, "relying party collection cannot contain null values");
+			String key = mapper.apply(idp);
+			Assert.isNull(result.get(key), () -> "relying party duplicate key:"+key);
+			result.put(key, idp);
+		}
+		return result;
 	}
 
 }

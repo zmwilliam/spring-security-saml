@@ -29,9 +29,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.saml2.credentials.Saml2X509Credential;
-import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.InMemorySaml2RelyingPartyRepository;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
 import org.springframework.util.StringUtils;
 
 import boot.saml2.config.OpenSamlKeyConverters.Saml2X509CredentialConverter;
@@ -48,8 +48,8 @@ public class Saml2SampleBootConfiguration {
 	private List<IdentityProvider> providers;
 
 	@Bean
-	public Saml2IdentityProviderDetailsRepository saml2IdentityProviderDetailsRepository() {
-		return new InMemorySaml2IdentityProviderDetailsRepository(getIdentityProviders(providers));
+	public Saml2RelyingPartyRepository saml2IdentityProviderDetailsRepository() {
+		return new InMemorySaml2RelyingPartyRepository(getIdentityProviders(providers));
 	}
 
 	public void setIdentityProviders(List<IdentityProvider> providers) {

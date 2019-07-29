@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequest;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -43,13 +43,13 @@ import static org.springframework.util.Assert.state;
 public class Saml2WebSsoAuthenticationRequestFilter extends OncePerRequestFilter {
 
 	private final AntPathRequestMatcher matcher;
-	private final Saml2IdentityProviderDetailsRepository providerRepository;
+	private final Saml2RelyingPartyRepository providerRepository;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 	private final String webSsoUriTemplate;
 
 	public Saml2WebSsoAuthenticationRequestFilter(String filterProcessesUrl,
 												  String webSsoUriTemplate,
-												  Saml2IdentityProviderDetailsRepository providerRepository,
+												  Saml2RelyingPartyRepository providerRepository,
 												  Saml2AuthenticationRequestResolver authenticationRequestResolver) {
 		hasText(filterProcessesUrl, "filterProcessesUrl must contain an {alias} matcher parameter");
 		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");

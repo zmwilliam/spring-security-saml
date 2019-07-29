@@ -26,7 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationToken;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -40,10 +40,10 @@ import static org.springframework.util.StringUtils.hasText;
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
 	private final AntPathRequestMatcher aliasMatcher;
-	private final Saml2IdentityProviderDetailsRepository identityProviderRepository;
+	private final Saml2RelyingPartyRepository identityProviderRepository;
 
 	public Saml2WebSsoAuthenticationFilter(String filterProcessesUrl,
-										   Saml2IdentityProviderDetailsRepository identityProviderRepository) {
+										   Saml2RelyingPartyRepository identityProviderRepository) {
 		super(filterProcessesUrl);
 		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");
 		this.identityProviderRepository = identityProviderRepository;
