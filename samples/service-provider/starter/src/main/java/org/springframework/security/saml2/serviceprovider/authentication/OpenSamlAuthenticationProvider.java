@@ -81,11 +81,11 @@ import static java.util.Collections.singletonList;
 import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.StringUtils.hasText;
 
-public class Saml2AuthenticationProvider implements AuthenticationProvider {
+public class OpenSamlAuthenticationProvider implements AuthenticationProvider {
 
-	private static Log logger = LogFactory.getLog(Saml2AuthenticationProvider.class);
+	private static Log logger = LogFactory.getLog(OpenSamlAuthenticationProvider.class);
 
-	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
+	private final OpenSamlImplementation saml = OpenSamlImplementation.getInstance();
 
 	private GrantedAuthoritiesMapper authoritiesMapper = (a -> a);
 

@@ -20,8 +20,6 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 import java.time.Clock;
 import java.util.UUID;
 
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
-
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.AuthnRequest;
@@ -29,9 +27,9 @@ import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.security.SecurityException;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 
-public class DefaultSaml2AuthenticationRequestResolver implements Saml2AuthenticationRequestResolver{
+public class OpenSamlAuthenticationRequestResolver implements Saml2AuthenticationRequestResolver{
 	private final Clock clock = Clock.systemUTC();
-	private final OpenSaml2Implementation saml = OpenSaml2Implementation.getInstance();
+	private final OpenSamlImplementation saml = OpenSamlImplementation.getInstance();
 
 	@Override
 	public String resolveAuthenticationRequest(Saml2AuthenticationRequest request) {

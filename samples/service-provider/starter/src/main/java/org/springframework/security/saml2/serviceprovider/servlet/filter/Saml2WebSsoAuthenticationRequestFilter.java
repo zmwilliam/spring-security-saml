@@ -40,17 +40,17 @@ import static org.springframework.security.saml2.serviceprovider.servlet.filter.
 import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.state;
 
-public class Saml2AuthenticationRequestFilter extends OncePerRequestFilter {
+public class Saml2WebSsoAuthenticationRequestFilter extends OncePerRequestFilter {
 
 	private final AntPathRequestMatcher matcher;
 	private final Saml2IdentityProviderDetailsRepository providerRepository;
 	private Saml2AuthenticationRequestResolver authenticationRequestResolver;
 	private final String webSsoUriTemplate;
 
-	public Saml2AuthenticationRequestFilter(String filterProcessesUrl,
-											String webSsoUriTemplate,
-											Saml2IdentityProviderDetailsRepository providerRepository,
-											Saml2AuthenticationRequestResolver authenticationRequestResolver) {
+	public Saml2WebSsoAuthenticationRequestFilter(String filterProcessesUrl,
+												  String webSsoUriTemplate,
+												  Saml2IdentityProviderDetailsRepository providerRepository,
+												  Saml2AuthenticationRequestResolver authenticationRequestResolver) {
 		hasText(filterProcessesUrl, "filterProcessesUrl must contain an {alias} matcher parameter");
 		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");
 		this.matcher = new AntPathRequestMatcher(filterProcessesUrl);

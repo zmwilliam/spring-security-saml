@@ -65,8 +65,8 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getBuilderFactory;
 
-final class OpenSaml2Implementation {
-	private static OpenSaml2Implementation instance = new OpenSaml2Implementation();
+final class OpenSamlImplementation {
+	private static OpenSamlImplementation instance = new OpenSamlImplementation();
 
 	private final BasicParserPool parserPool = new BasicParserPool();
 
@@ -78,7 +78,7 @@ final class OpenSaml2Implementation {
 			)
 	);
 
-	private OpenSaml2Implementation() {
+	private OpenSamlImplementation() {
 		bootstrap();
 	}
 	/*
@@ -86,7 +86,7 @@ final class OpenSaml2Implementation {
 	 * PUBLIC METHODS
 	 * ==============================================================
 	 */
-	static OpenSaml2Implementation getInstance() {
+	static OpenSamlImplementation getInstance() {
 		return instance;
 	}
 

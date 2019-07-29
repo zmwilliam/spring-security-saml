@@ -19,12 +19,10 @@ package org.springframework.security.saml2.serviceprovider.authentication;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class OpenSaml2ImplementationTests {
+class OpenSamlImplementationTests {
 
 	@Test
 	void getInstance() {
-		OpenSaml2Implementation.getInstance();
+		OpenSamlImplementation.getInstance();
 	}
 }

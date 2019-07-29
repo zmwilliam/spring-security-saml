@@ -27,12 +27,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.saml2.serviceprovider.authentication.DefaultSaml2AuthenticationRequestResolver;
-import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationRequestResolver;
+import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2AuthenticationRequestFilter;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -108,7 +108,7 @@ public class Saml2ServiceProviderConfigurer
 		);
 
 		if (authenticationProvider == null) {
-			authenticationProvider = new Saml2AuthenticationProvider();
+			authenticationProvider = new OpenSamlAuthenticationProvider();
 		}
 		builder.authenticationProvider(postProcess(authenticationProvider));
 
@@ -126,7 +126,7 @@ public class Saml2ServiceProviderConfigurer
 
 		authenticationRequestResolver = getSharedObject(builder,
 			Saml2AuthenticationRequestResolver.class,
-			() -> new DefaultSaml2AuthenticationRequestResolver(),
+			() -> new OpenSamlAuthenticationRequestResolver(),
 			authenticationRequestResolver
 		);
 	}
@@ -139,7 +139,7 @@ public class Saml2ServiceProviderConfigurer
 	}
 
 	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
-		Filter authenticationRequestFilter = new Saml2AuthenticationRequestFilter(
+		Filter authenticationRequestFilter = new Saml2WebSsoAuthenticationRequestFilter(
 			filterUrl,
 			"{baseUrl}" + filterPrefix + "/SSO/{alias}",
 			providerDetailsRepository,
