@@ -10,13 +10,13 @@ public interface Saml2IdentityProviderDetailsRepository {
 	 * @param idpEntityId - unique entityId for the remote identity provider, not null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails findByEntityId(String idpEntityId);
+	Saml2RelyingPartyRegistration findByEntityId(String idpEntityId);
 
 	/**
 	 * Resolves an entity provider by entityId
 	 * @param alias - unique alias, not null
 	 * @return a configured remote identity provider, or null if none found
 	 */
-	Saml2IdentityProviderDetails findByAlias(String alias);
+	Saml2RelyingPartyRegistration findByAlias(String alias);
 
 }

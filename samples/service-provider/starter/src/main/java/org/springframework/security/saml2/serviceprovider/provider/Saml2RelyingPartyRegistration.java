@@ -31,41 +31,41 @@ import static org.springframework.util.Assert.hasText;
 import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
-public class Saml2IdentityProviderDetails {
+public class Saml2RelyingPartyRegistration {
 
-	private final String entityId;
 	private final String alias;
-	private final URI webSsoUrl;
+	private final String remoteIdpEntityId;
+	private final URI idpWebSsoUrl;
 	private final List<Saml2X509Credential> credentials;
-	private final String localSpEntityIdTemplate;
+	private final String localEntityIdTemplate;
 
-	public Saml2IdentityProviderDetails(String idpEntityId,
-										   String alias,
-										   URI idpWebSsoUri,
-										   List<Saml2X509Credential> credentials) {
+	public Saml2RelyingPartyRegistration(String idpEntityId,
+										 String alias,
+										 URI idpWebSsoUri,
+										 List<Saml2X509Credential> credentials) {
 		this(idpEntityId, alias, idpWebSsoUri, credentials, "{baseUrl}/saml/sp/metadata/{alias}");
 	}
 
-	public Saml2IdentityProviderDetails(String idpEntityId,
-										   String alias,
-										   URI idpWebSsoUri,
-										   List<Saml2X509Credential> credentials,
-										   String localSpEntityIdTemplate) {
+	public Saml2RelyingPartyRegistration(String idpEntityId,
+										 String alias,
+										 URI idpWebSsoUri,
+										 List<Saml2X509Credential> credentials,
+										 String localEntityIdTemplate) {
 		hasText(idpEntityId, "idpEntityId is required");
 		hasText(alias, "alias is required");
-		hasText(localSpEntityIdTemplate, "localSpEntityIdTemplate is required");
+		hasText(localEntityIdTemplate, "localEntityIdTemplate is required");
 		notEmpty(credentials, "credentials are required");
 		notNull(idpWebSsoUri, "idpWebSsoUri is required");
 		credentials.stream().forEach(c -> notNull(c, "credentials cannot contain null elements"));
-		this.entityId = idpEntityId;
+		this.remoteIdpEntityId = idpEntityId;
 		this.alias = alias;
 		this.credentials = credentials;
-		this.webSsoUrl = idpWebSsoUri;
-		this.localSpEntityIdTemplate = localSpEntityIdTemplate;
+		this.idpWebSsoUrl = idpWebSsoUri;
+		this.localEntityIdTemplate = localEntityIdTemplate;
 	}
 
-	public String getEntityId() {
-		return entityId;
+	public String getRemoteIdpEntityId() {
+		return remoteIdpEntityId;
 	}
 
 	public List<Saml2X509Credential> getCredentialsForUsage(Saml2X509CredentialUsage... types) {
@@ -83,12 +83,12 @@ public class Saml2IdentityProviderDetails {
 		return alias;
 	}
 
-	public URI getWebSsoUrl() {
-		return webSsoUrl;
+	public URI getIdpWebSsoUrl() {
+		return idpWebSsoUrl;
 	}
 
-	public String getLocalSpEntityIdTemplate() {
-		return localSpEntityIdTemplate;
+	public String getLocalEntityIdTemplate() {
+		return localEntityIdTemplate;
 	}
 
 	private boolean containsCredentialForTypes(Set<Saml2X509CredentialUsage> existing,

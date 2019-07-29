@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequest;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
@@ -79,14 +79,14 @@ public class Saml2WebSsoAuthenticationRequestFilter extends OncePerRequestFilter
 		}
 		Assert.hasText(alias, "IDP Alias must be present and valid");
 
-		Saml2IdentityProviderDetails idp = providerRepository.findByAlias(alias);
+		Saml2RelyingPartyRegistration idp = providerRepository.findByAlias(alias);
 		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(idp, request);
 		Saml2AuthenticationRequest authNRequest = new Saml2AuthenticationRequest(
 			localSpEntityId,
 			Saml2Utils.resolveUrlTemplate(
 				webSsoUriTemplate,
 				Saml2Utils.getApplicationUri(request),
-				idp.getEntityId(),
+				idp.getRemoteIdpEntityId(),
 				idp.getAlias()
 			),
 			idp.getCredentialsForUsage(SIGNING)
@@ -94,7 +94,7 @@ public class Saml2WebSsoAuthenticationRequestFilter extends OncePerRequestFilter
 		String xml = authenticationRequestResolver.resolveAuthenticationRequest(authNRequest);
 		String encoded = encode(deflate(xml));
 		String redirect = UriComponentsBuilder
-			.fromUri(idp.getWebSsoUrl())
+			.fromUri(idp.getIdpWebSsoUrl())
 			.queryParam("SAMLRequest", UriUtils.encode(encoded, StandardCharsets.ISO_8859_1))
 			.queryParam("RelayState", UriUtils.encode(relayState, StandardCharsets.ISO_8859_1))
 			.build(true)

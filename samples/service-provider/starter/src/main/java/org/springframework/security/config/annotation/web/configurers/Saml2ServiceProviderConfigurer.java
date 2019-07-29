@@ -30,7 +30,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationProvider;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetailsRepository;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationRequestFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
@@ -162,7 +162,7 @@ public class Saml2ServiceProviderConfigurer
 														  Saml2IdentityProviderDetailsRepository idpRepo) {
 		Map<String,String> idps = new LinkedHashMap<>();
 		if (idpRepo instanceof Iterable) {
-			Iterable<Saml2IdentityProviderDetails> repo = (Iterable<Saml2IdentityProviderDetails>) idpRepo;
+			Iterable<Saml2RelyingPartyRegistration> repo = (Iterable<Saml2RelyingPartyRegistration>) idpRepo;
 			repo.forEach(
 				p -> idps.put(p.getAlias(), authRequestPrefixUrl +p.getAlias())
 			);

@@ -31,42 +31,42 @@ import static org.springframework.util.Assert.notEmpty;
 import static org.springframework.util.Assert.notNull;
 
 public class InMemorySaml2IdentityProviderDetailsRepository
-		implements Saml2IdentityProviderDetailsRepository, Iterable<Saml2IdentityProviderDetails> {
+		implements Saml2IdentityProviderDetailsRepository, Iterable<Saml2RelyingPartyRegistration> {
 
-	final Map<String, Saml2IdentityProviderDetails> byId;
-	final Map<String, Saml2IdentityProviderDetails> byAlias;
+	final Map<String, Saml2RelyingPartyRegistration> byId;
+	final Map<String, Saml2RelyingPartyRegistration> byAlias;
 
-	public InMemorySaml2IdentityProviderDetailsRepository(Saml2IdentityProviderDetails... identityProviders) {
+	public InMemorySaml2IdentityProviderDetailsRepository(Saml2RelyingPartyRegistration... identityProviders) {
 		this(asList(identityProviders));
 	}
 
-	public InMemorySaml2IdentityProviderDetailsRepository(Collection<Saml2IdentityProviderDetails> identityProviders) {
+	public InMemorySaml2IdentityProviderDetailsRepository(Collection<Saml2RelyingPartyRegistration> identityProviders) {
 		notEmpty(identityProviders, "identity providers cannot be empty");
-		byId = createMappingToIdentityProvider(identityProviders, Saml2IdentityProviderDetails::getEntityId);
-		byAlias = createMappingToIdentityProvider(identityProviders, Saml2IdentityProviderDetails::getAlias);
+		byId = createMappingToIdentityProvider(identityProviders, Saml2RelyingPartyRegistration::getRemoteIdpEntityId);
+		byAlias = createMappingToIdentityProvider(identityProviders, Saml2RelyingPartyRegistration::getAlias);
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails findByEntityId(String entityId) {
+	public Saml2RelyingPartyRegistration findByEntityId(String entityId) {
 		Assert.notNull(entityId, "entityId must not be null");
 		return byId.get(entityId);
 	}
 
 	@Override
-	public Saml2IdentityProviderDetails findByAlias(String alias) {
+	public Saml2RelyingPartyRegistration findByAlias(String alias) {
 		Assert.notNull(alias, "alias must not be null");
 		return byAlias.get(alias);
 	}
 
 	@Override
-	public Iterator<Saml2IdentityProviderDetails> iterator() {
+	public Iterator<Saml2RelyingPartyRegistration> iterator() {
 		return byId.values().iterator();
 	}
 
 
-	private static Map<String, Saml2IdentityProviderDetails> createMappingToIdentityProvider(
-			Collection<Saml2IdentityProviderDetails> idps,
-			Function<Saml2IdentityProviderDetails,
+	private static Map<String, Saml2RelyingPartyRegistration> createMappingToIdentityProvider(
+			Collection<Saml2RelyingPartyRegistration> idps,
+			Function<Saml2RelyingPartyRegistration,
 			String> mapper
 	) {
 		return Collections.unmodifiableMap(

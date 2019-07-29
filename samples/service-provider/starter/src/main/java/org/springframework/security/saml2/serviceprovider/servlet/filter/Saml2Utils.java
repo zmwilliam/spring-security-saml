@@ -28,7 +28,7 @@ import java.util.zip.InflaterOutputStream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.security.saml2.Saml2Exception;
-import org.springframework.security.saml2.serviceprovider.provider.Saml2IdentityProviderDetails;
+import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -88,12 +88,12 @@ final class Saml2Utils {
 		return uriComponents.toUriString();
 	}
 
-	static String getServiceProviderEntityId(Saml2IdentityProviderDetails idp,
+	static String getServiceProviderEntityId(Saml2RelyingPartyRegistration idp,
 											 HttpServletRequest request) {
 		return resolveUrlTemplate(
-			idp.getLocalSpEntityIdTemplate(),
+			idp.getLocalEntityIdTemplate(),
 			getApplicationUri(request),
-			idp.getEntityId(),
+			idp.getRemoteIdpEntityId(),
 			idp.getAlias()
 		);
 	}
