@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import static java.util.Arrays.asList;
 import static org.springframework.util.Assert.notEmpty;
@@ -32,8 +33,10 @@ import static org.springframework.util.Assert.notNull;
 public class InMemorySaml2RelyingPartyRepository
 		implements Saml2RelyingPartyRepository, Iterable<Saml2RelyingPartyRegistration> {
 
-	final Map<String, Saml2RelyingPartyRegistration> byId;
-	final Map<String, Saml2RelyingPartyRegistration> byAlias;
+	private final Map<String, Saml2RelyingPartyRegistration> byId;
+	private final Map<String, Saml2RelyingPartyRegistration> byAlias;
+	private final Saml2RelyingPartyRegistration defaultRegistration;
+
 
 	public InMemorySaml2RelyingPartyRepository(Saml2RelyingPartyRegistration... registrations) {
 		this(asList(registrations));
@@ -43,6 +46,7 @@ public class InMemorySaml2RelyingPartyRepository
 		notEmpty(registrations, "registrations cannot be empty");
 		byId = createMappingToIdentityProvider(registrations, Saml2RelyingPartyRegistration::getRemoteIdpEntityId);
 		byAlias = createMappingToIdentityProvider(registrations, Saml2RelyingPartyRegistration::getAlias);
+		defaultRegistration = registrations.iterator().next();
 	}
 
 	@Override
@@ -53,8 +57,12 @@ public class InMemorySaml2RelyingPartyRepository
 
 	@Override
 	public Saml2RelyingPartyRegistration findByAlias(String alias) {
-		Assert.notNull(alias, "alias must not be null");
-		return byAlias.get(alias);
+		if (StringUtils.hasText(alias)) {
+			return byAlias.get(alias);
+		}
+		else {
+			return defaultRegistration;
+		}
 	}
 
 	@Override
@@ -72,6 +80,7 @@ public class InMemorySaml2RelyingPartyRepository
 		for (Saml2RelyingPartyRegistration idp : idps) {
 			notNull(idp, "relying party collection cannot contain null values");
 			String key = mapper.apply(idp);
+			notNull(idp, "relying party key may not be null");
 			Assert.isNull(result.get(key), () -> "relying party duplicate key:"+key);
 			result.put(key, idp);
 		}

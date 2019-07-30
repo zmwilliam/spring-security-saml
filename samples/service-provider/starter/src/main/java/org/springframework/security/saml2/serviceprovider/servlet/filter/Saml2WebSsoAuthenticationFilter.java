@@ -29,25 +29,22 @@ import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingP
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.decode;
 import static org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2Utils.inflate;
-import static org.springframework.util.Assert.state;
 import static org.springframework.util.StringUtils.hasText;
 
 public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
-	private final AntPathRequestMatcher aliasMatcher;
-	private final Saml2RelyingPartyRepository identityProviderRepository;
+	private final Saml2RequestMatcher aliasMatcher;
+	private final Saml2RelyingPartyRepository relyingPartyRepository;
 
-	public Saml2WebSsoAuthenticationFilter(String filterProcessesUrl,
-										   Saml2RelyingPartyRepository identityProviderRepository) {
-		super(filterProcessesUrl);
-		state(filterProcessesUrl.contains("{alias}"), "filterProcessesUrl must contain an {alias} matcher parameter");
-		this.identityProviderRepository = identityProviderRepository;
-		this.aliasMatcher = new AntPathRequestMatcher(filterProcessesUrl);
+	public Saml2WebSsoAuthenticationFilter(Saml2RequestMatcher matcher,
+										   Saml2RelyingPartyRepository relyingPartyRepository) {
+		super(matcher.getPattern());
+		this.aliasMatcher = matcher;
+		this.relyingPartyRepository = relyingPartyRepository;
 		setAllowSessionCreation(true);
 		setSessionAuthenticationStrategy(new ChangeSessionIdAuthenticationStrategy());
 	}
@@ -67,24 +64,19 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 		byte[] b = decode(saml2Response);
 
 		String responseXml = inflateIfRequired(request, b);
-		Saml2RelyingPartyRegistration idp = identityProviderRepository.findByAlias(getIdpAlias(request));
-		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(idp, request);
+		Saml2RelyingPartyRegistration rp =
+			relyingPartyRepository.findByAlias(aliasMatcher.getRelyingPartyAlias(request));
+		String localSpEntityId = Saml2Utils.getServiceProviderEntityId(rp, request);
 		final Saml2AuthenticationToken authentication = new Saml2AuthenticationToken(
 			responseXml,
 			request.getRequestURL().toString(),
-			idp.getRemoteIdpEntityId(),
+			rp.getRemoteIdpEntityId(),
 			localSpEntityId,
-			idp.getCredentialsForUsage()
+			rp.getCredentialsForUsage()
 		);
 		return getAuthenticationManager().authenticate(authentication);
 	}
 
-	private String getIdpAlias(HttpServletRequest request) {
-		if (aliasMatcher.matches(request)) {
-			return aliasMatcher.extractUriTemplateVariables(request).get("alias");
-		}
-		return null;
-	}
 
 	private String inflateIfRequired(HttpServletRequest request, byte[] b) {
 		if (HttpMethod.GET.matches(request.getMethod())) {

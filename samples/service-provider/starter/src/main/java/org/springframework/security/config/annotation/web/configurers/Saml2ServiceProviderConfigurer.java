@@ -27,14 +27,16 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationProvider;
+import org.springframework.security.saml2.serviceprovider.authentication.OpenSamlAuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationRequestFilter;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.RelyingPartyAliasUrlRequestMatcher;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2RequestMatcher;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
+import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationRequestFilter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -133,14 +135,29 @@ public class Saml2ServiceProviderConfigurer
 
 	@Override
 	public void configure(HttpSecurity builder) throws Exception {
-		configureSaml2LoginPageFilter(builder, filterPrefix + "/authenticate/", "/login");
-		configureSaml2WebSsoAuthenticationFilter(builder, filterPrefix + "/SSO/{alias}/**");
-		configureSaml2AuthenticationRequestFilter(builder, filterPrefix + "/authenticate/{alias}/**");
+		String authNRequestUrlPrefix = filterPrefix + "/authenticate/";
+		configureSaml2LoginPageFilter(builder, authNRequestUrlPrefix, "/login");
+
+		String authNRequestUriMatcher = authNRequestUrlPrefix + "**";
+		String authNAliasExtractor = authNRequestUrlPrefix + "{alias}/**";
+		configureSaml2AuthenticationRequestFilter(
+			builder,
+			new RelyingPartyAliasUrlRequestMatcher(authNRequestUriMatcher, authNAliasExtractor)
+		);
+
+		String ssoUriPrefix = filterPrefix + "/SSO/";
+		String ssoUriMatcher = ssoUriPrefix + "**";
+		String ssoAliasExtractor = ssoUriPrefix + "{alias}/**";
+		configureSaml2WebSsoAuthenticationFilter(
+			builder,
+			new RelyingPartyAliasUrlRequestMatcher(ssoUriMatcher, ssoAliasExtractor)
+		);
+
 	}
 
-	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, String filterUrl) {
+	protected void configureSaml2AuthenticationRequestFilter(HttpSecurity builder, Saml2RequestMatcher matcher) {
 		Filter authenticationRequestFilter = new Saml2WebSsoAuthenticationRequestFilter(
-			filterUrl,
+			matcher,
 			"{baseUrl}" + filterPrefix + "/SSO/{alias}",
 			providerDetailsRepository,
 			authenticationRequestResolver
@@ -171,11 +188,11 @@ public class Saml2ServiceProviderConfigurer
 	}
 
 	protected void configureSaml2WebSsoAuthenticationFilter(HttpSecurity builder,
-															String filterUrl) {
+															Saml2RequestMatcher matcher) {
 		AuthenticationFailureHandler failureHandler =
 			new SimpleUrlAuthenticationFailureHandler("/login?error=saml2-error");
 		Saml2WebSsoAuthenticationFilter webSsoFilter =
-			new Saml2WebSsoAuthenticationFilter(filterUrl, providerDetailsRepository);
+			new Saml2WebSsoAuthenticationFilter(matcher, providerDetailsRepository);
 		webSsoFilter.setAuthenticationFailureHandler(failureHandler);
 		webSsoFilter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
 		builder.addFilterAfter(webSsoFilter, HeaderWriterFilter.class);
