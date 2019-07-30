@@ -21,13 +21,19 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
 import boot.saml2.config.Saml2SampleBootConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 @SpringBootApplication
 @Import({ Saml2SampleBootConfiguration.class })
 public class Saml2ServiceProviderStarterApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Saml2ServiceProviderStarterApplication.class, args);
+		Log log = LogFactory.getLog(Saml2ServiceProviderStarterApplication.class);
+		log.info("Starting SAML 2 Sample Application");
+		SpringApplication.run(
+			Saml2ServiceProviderStarterApplication.class, args
+		);
 	}
 
 }
