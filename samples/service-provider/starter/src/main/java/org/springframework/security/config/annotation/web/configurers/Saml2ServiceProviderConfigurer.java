@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.servlet.Filter;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -32,7 +33,6 @@ import org.springframework.security.saml2.serviceprovider.authentication.OpenSam
 import org.springframework.security.saml2.serviceprovider.authentication.Saml2AuthenticationRequestResolver;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRegistration;
 import org.springframework.security.saml2.serviceprovider.provider.Saml2RelyingPartyRepository;
-import org.springframework.security.saml2.serviceprovider.servlet.filter.RelyingPartyAliasUrlRequestMatcher;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2LoginPageGeneratingFilter;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2RequestMatcher;
 import org.springframework.security.saml2.serviceprovider.servlet.filter.Saml2WebSsoAuthenticationFilter;
@@ -42,6 +42,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.header.HeaderWriterFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.util.Optional.ofNullable;
 
@@ -142,7 +143,7 @@ public class Saml2ServiceProviderConfigurer
 		String authNAliasExtractor = authNRequestUrlPrefix + "{alias}/**";
 		configureSaml2AuthenticationRequestFilter(
 			builder,
-			new RelyingPartyAliasUrlRequestMatcher(authNRequestUriMatcher, authNAliasExtractor)
+			new RelyingPartyAliasUrlRequestMatcher(authNRequestUriMatcher, authNAliasExtractor, "alias")
 		);
 
 		String ssoUriPrefix = filterPrefix + "/SSO/";
@@ -150,7 +151,7 @@ public class Saml2ServiceProviderConfigurer
 		String ssoAliasExtractor = ssoUriPrefix + "{alias}/**";
 		configureSaml2WebSsoAuthenticationFilter(
 			builder,
-			new RelyingPartyAliasUrlRequestMatcher(ssoUriMatcher, ssoAliasExtractor)
+			new RelyingPartyAliasUrlRequestMatcher(ssoUriMatcher, ssoAliasExtractor, "alias")
 		);
 
 	}
@@ -241,5 +242,39 @@ public class Saml2ServiceProviderConfigurer
 
 		exceptionHandling.authenticationEntryPoint(entryPoint);
 	}
+
+	private static class RelyingPartyAliasUrlRequestMatcher implements Saml2RequestMatcher {
+
+		private final AntPathRequestMatcher filterProcessesMatcher;
+		private final AntPathRequestMatcher aliasExtractor;
+		private final String aliasParameter;
+
+		public RelyingPartyAliasUrlRequestMatcher(String filterProcessesUrl,
+												  String aliasExtractorUrl,
+												  String aliasParameter) {
+			this.filterProcessesMatcher = new AntPathRequestMatcher(filterProcessesUrl);
+			this.aliasExtractor = new AntPathRequestMatcher(aliasExtractorUrl);
+			this.aliasParameter = aliasParameter;
+		}
+
+		@Override
+		public String getRelyingPartyAlias(HttpServletRequest request) {
+			if (aliasExtractor.matches(request)) {
+				return aliasExtractor.extractUriTemplateVariables(request).get(aliasParameter);
+			}
+			return null;
+		}
+
+		@Override
+		public String getPattern() {
+			return filterProcessesMatcher.getPattern();
+		}
+
+		@Override
+		public boolean matches(HttpServletRequest request) {
+			return filterProcessesMatcher.matches(request);
+		}
+	}
+
 
 }
