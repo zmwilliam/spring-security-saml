@@ -23,6 +23,4 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 public interface Saml2RequestMatcher extends RequestMatcher {
 	String getRelyingPartyAlias(HttpServletRequest request);
-
-	String getPattern();
 }

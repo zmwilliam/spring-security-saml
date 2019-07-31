@@ -42,7 +42,7 @@ public class Saml2WebSsoAuthenticationFilter extends AbstractAuthenticationProce
 
 	public Saml2WebSsoAuthenticationFilter(Saml2RequestMatcher matcher,
 										   Saml2RelyingPartyRepository relyingPartyRepository) {
-		super(matcher.getPattern());
+		super(matcher);
 		this.aliasMatcher = matcher;
 		this.relyingPartyRepository = relyingPartyRepository;
 		setAllowSessionCreation(true);

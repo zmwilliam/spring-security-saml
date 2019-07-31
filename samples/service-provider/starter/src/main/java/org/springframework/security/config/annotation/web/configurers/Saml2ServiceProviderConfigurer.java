@@ -266,11 +266,6 @@ public class Saml2ServiceProviderConfigurer
 		}
 
 		@Override
-		public String getPattern() {
-			return filterProcessesMatcher.getPattern();
-		}
-
-		@Override
 		public boolean matches(HttpServletRequest request) {
 			return filterProcessesMatcher.matches(request);
 		}
