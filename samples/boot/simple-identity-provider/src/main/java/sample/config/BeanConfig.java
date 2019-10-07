@@ -41,11 +41,21 @@ public class BeanConfig extends SamlIdentityProviderServerBeanConfiguration {
 
 	@Bean
 	public UserDetailsService userDetailsService() {
-		UserDetails userDetails = User.withDefaultPasswordEncoder()
+		UserDetails userDetails1 = User.withDefaultPasswordEncoder()
 			.username("user")
 			.password("password")
 			.roles("USER")
 			.build();
-		return new InMemoryUserDetailsManager(userDetails);
+		UserDetails userDetails2 = User.withDefaultPasswordEncoder()
+			.username("marissa")
+			.password("koala")
+			.roles("USER", "ADMIN")
+			.build();
+		UserDetails userDetails3 = User.withDefaultPasswordEncoder()
+			.username("filip@example.com")
+			.password("password")
+			.roles("USER", "ADMIN")
+			.build();
+		return new InMemoryUserDetailsManager(userDetails1, userDetails2, userDetails3);
 	}
 }
