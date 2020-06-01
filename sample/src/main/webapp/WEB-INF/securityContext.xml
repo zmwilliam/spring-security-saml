@@ -3,8 +3,8 @@
        xmlns:security="http://www.springframework.org/schema/security"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans-3.1.xsd
-              http://www.springframework.org/schema/security https://www.springframework.org/schema/security/spring-security.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context-3.1.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+              http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
     <!-- Enable auto-wiring -->
     <context:annotation-config/>
@@ -12,20 +12,23 @@
     <!-- Scan for auto-wiring classes in spring saml packages -->
     <context:component-scan base-package="org.springframework.security.saml"/>
 
+
     <!-- Unsecured pages -->
+    <!--
     <security:http security="none" pattern="/favicon.ico"/>
     <security:http security="none" pattern="/images/**"/>
     <security:http security="none" pattern="/css/**"/>
     <security:http security="none" pattern="/logout.jsp"/>
+    -->
 
     <!-- Security for the administration UI -->
-    <security:http pattern="/saml/web/**" use-expressions="false">
+    <!--<security:http pattern="/saml/web/**" use-expressions="false">
         <security:access-denied-handler error-page="/saml/web/metadata/login"/>
         <security:form-login login-processing-url="/saml/web/login" login-page="/saml/web/metadata/login" default-target-url="/saml/web/metadata"/>
         <security:intercept-url pattern="/saml/web/metadata/login" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
         <security:intercept-url pattern="/saml/web/**" access="ROLE_ADMIN"/>
         <security:custom-filter before="FIRST" ref="metadataGeneratorFilter"/>
-    </security:http>
+    </security:http> -->
 
     <!-- Secured pages with SAML as entry point -->
     <security:http entry-point-ref="samlEntryPoint" use-expressions="false">
@@ -37,12 +40,12 @@
     <!-- Filters for processing of SAML messages -->
     <bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
         <security:filter-chain-map request-matcher="ant">
+            <security:filter-chain pattern="/saml/metadata/**" filters="metadataDisplayFilter"/>
+            <!--<security:filter-chain pattern="/saml/SingleLogout/**" filters="samlLogoutProcessingFiler"/> -->
             <security:filter-chain pattern="/saml/login/**" filters="samlEntryPoint"/>
             <security:filter-chain pattern="/saml/logout/**" filters="samlLogoutFilter"/>
-            <security:filter-chain pattern="/saml/metadata/**" filters="metadataDisplayFilter"/>
             <security:filter-chain pattern="/saml/SSO/**" filters="samlWebSSOProcessingFilter"/>
             <security:filter-chain pattern="/saml/SSOHoK/**" filters="samlWebSSOHoKProcessingFilter"/>
-            <security:filter-chain pattern="/saml/SingleLogout/**" filters="samlLogoutProcessingFilter"/>
             <security:filter-chain pattern="/saml/discovery/**" filters="samlIDPDiscovery"/>
         </security:filter-chain-map>
     </bean>
@@ -63,32 +66,29 @@
     <bean id="failureRedirectHandler"
           class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
         <property name="useForward" value="true"/>
-        <property name="defaultFailureUrl" value="/error.jsp"/>
+        <property name="defaultFailureUrl" value="/"/>
     </bean>
+
 
     <!-- Handler for successful logout -->
     <bean id="successLogoutHandler" class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
-        <property name="defaultTargetUrl" value="/logout.jsp"/>
+        <property name="defaultTargetUrl" value="/"/>
     </bean>
+
 
     <security:authentication-manager alias="authenticationManager">
         <!-- Register authentication manager for SAML provider -->
         <security:authentication-provider ref="samlAuthenticationProvider"/>
-        <!-- Register authentication manager for administration UI -->
+        <!-- Register authentication manager for administration UI --> 
         <security:authentication-provider>
             <security:user-service id="adminInterfaceService">
                 <security:user name="admin" password="admin" authorities="ROLE_ADMIN"/>
             </security:user-service>
         </security:authentication-provider>
-    </security:authentication-manager>
+    </security:authentication-manager> 
 
     <!-- Logger for SAML messages and events -->
-    <bean id="samlLogger" class="org.springframework.security.saml.log.SAMLDefaultLogger">
-    	<!-- Enable these to see the actual SAML Messages in logs -->
-       	<!-- <property name="logAllMessages" value="true"/>  -->
-    	<!-- <property name="logErrors" value="true"/>  -->
-    	<!-- <property name="logMessagesOnException" value="true"/>  -->
-	</bean>
+    <bean id="samlLogger" class="org.springframework.security.saml.log.SAMLDefaultLogger"/>
 
     <!-- Central storage of cryptographic keys -->
     <bean id="keyManager" class="org.springframework.security.saml.key.JKSKeyManager">
@@ -113,7 +113,7 @@
 
     <!-- IDP Discovery Service -->
     <bean id="samlIDPDiscovery" class="org.springframework.security.saml.SAMLDiscovery">
-        <property name="idpSelectionPath" value="/WEB-INF/security/idpSelection.jsp"/>
+        <property name="idpSelectionPath" value="/idpSelection.jsp"/>
     </bean>
 
     <!-- Filter automatically generates default SP metadata -->
@@ -141,40 +141,10 @@
 
     <!-- IDP Metadata configuration - paths to metadata of IDPs in circle of trust is here -->
     <bean id="metadata" class="org.springframework.security.saml.metadata.CachingMetadataManager">
+               <!-- <property name="defaultIDP" value="https://nshobayo.oktapreview.com/"/> -->
+
         <constructor-arg>
             <list>
-                <!-- Example of classpath metadata with Extended Metadata -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.opensaml.saml2.metadata.provider.ResourceBackedMetadataProvider">
-                            <constructor-arg>
-                                <bean class="java.util.Timer"/>
-                            </constructor-arg>
-                            <constructor-arg>
-                                <bean class="org.opensaml.util.resource.ClasspathResource">
-                                    <constructor-arg value="/metadata/idp.xml"/>
-                                </bean>
-                            </constructor-arg>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                        </bean>
-                    </constructor-arg>
-                </bean>
-                <!-- Example of HTTP metadata without Extended Metadata -->
-                <bean class="org.opensaml.saml2.metadata.provider.HTTPMetadataProvider">
-                    <!-- URL containing the metadata -->
-                    <constructor-arg>
-                        <value type="java.lang.String">https://idp.ssocircle.com/idp-meta.xml</value>
-                    </constructor-arg>
-                    <!-- Timeout for metadata loading in ms -->
-                    <constructor-arg>
-                        <value type="int">15000</value>
-                    </constructor-arg>
-                    <property name="parserPool" ref="parserPool"/>
-                </bean>
                 <!-- Example of file system metadata without Extended Metadata -->
                 <!--
                 <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
@@ -184,12 +154,25 @@
                     <property name="parserPool" ref="parserPool"/>
                 </bean>
                 -->
+
+                <bean class="org.opensaml.saml2.metadata.provider.HTTPMetadataProvider">
+                    <!-- URL containing the metadata -->
+                    <constructor-arg>
+                        <!-- This URL should look something like this: https://${yourOktaDomain}/app/abc0defghijK1lmN23o4/sso/saml/metadata -->
+                        <value type="java.lang.String">https://dev-478568.okta.com/app/exkd9rn9cRTRdKUpK4x6/sso/saml/metadata</value>
+                          <!--<value type="java.lang.String">https://dev-minhaklabin.klabin.com.br/c/portal/saml/metadata</value>-->
+                    </constructor-arg>
+                    <!-- Timeout for metadata loading in ms -->
+                    <constructor-arg>
+                        <value type="int">5000</value>
+                    </constructor-arg>
+                    <property name="parserPool" ref="parserPool"/>
+                </bean>
             </list>
         </constructor-arg>
         <!-- OPTIONAL used when one of the metadata files contains information about this service provider -->
         <!-- <property name="hostedSPName" value=""/> -->
         <!-- OPTIONAL property: can tell the system which IDP should be used for authenticating user by default. -->
-        <!-- <property name="defaultIDP" value="http://localhost:8080/opensso"/> -->
     </bean>
 
     <!-- SAML Authentication Provider responsible for validating of received SAML messages -->
@@ -313,20 +296,14 @@
     <!-- Initialization of the velocity engine -->
     <bean id="velocityEngine" class="org.springframework.security.saml.util.VelocityFactory" factory-method="getEngine"/>
 
-    <!-- 
-        XML parser pool needed for OpenSAML parsing
-
-        WARNING: If customizing a ParserPool implementation See https://shibboleth.net/community/advisories/secadv_20131213.txt
-                 Specifically the following should be explicitly set to avoid exploits:
-                 
-                 1) set pool property 'expandEntityReferences' to 'false'
-                 2) set feature 'javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING' to true
-                 3) set feature 'https://apache.org/xml/features/disallow-doctype-decl' to true. This is a Xerces-specific feature,
-                    including derivatives such as the internal JAXP implementations supplied with the Oracle and OpenJDK JREs. For
-                    other JAXP implementations, consult the documentation for the implementation for guidance on how to achieve a
-                    similar configuration.
-    -->
-    <bean id="parserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" init-method="initialize"/>
+    <!-- XML parser pool needed for OpenSAML parsing -->
+    <bean id="parserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" init-method="initialize">
+        <property name="builderFeatures">
+            <map>
+                <entry key="http://apache.org/xml/features/dom/defer-node-expansion" value="false"/>
+            </map>
+        </property>
+    </bean>
 
     <bean id="parserPoolHolder" class="org.springframework.security.saml.parser.ParserPoolHolder"/>
 
